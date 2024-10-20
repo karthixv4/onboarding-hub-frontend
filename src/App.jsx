@@ -6,6 +6,8 @@ import ResourceTable from './components/ResourceTable'
 import { Routes, Route } from 'react-router-dom';
 import Login from './components/Login'
 import UserDashboard from './components/UserDashboard'
+import Sample from './components/Sample'
+import InitialSetup from './components/IntialSetup'
 function App() {
   return (
     <>
@@ -19,6 +21,8 @@ function App() {
         <Route path="/all/resources" element={<ResourceTable />} />
         <Route path="/onboard/new" element={<ResouceInfo />} />
         <Route path="/ud" element={<UserDashboard/>} />
+        <Route path="/aa" element={<Sample />} />
+        <Route path="/init" element={<InitialSetup />} />
       </Routes>
     </>
   )

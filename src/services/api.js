@@ -35,3 +35,21 @@ export const createKTPlan = async(data)=>{
     throw new Error(error.response.data.message || 'Registration failed'); // Handle errors
   }
 }
+
+export const createActionItem = async(data)=>{
+  try {
+    const response = await axios.post('http://localhost:5000/api/actionItem', data);
+    return response.data; // Return the response data
+  } catch (error) {
+    throw new Error(error.response.data.message || 'Registration failed'); // Handle errors
+  }
+}
+
+export const updateActionItem=async(id, data)=>{
+  try {
+    const response = await axios.put(`http://localhost:5000/api/actionItem/${id}`, data);
+    return response.data; // Return the response data
+  } catch (error) {
+    throw new Error(error.response.data.message || 'Registration failed'); // Handle errors
+}
+}

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDisclosure } from "@nextui-org/react";
 import AssignKT from './AssignKT';
+import AssignActionItem from './AssignActionItem';
 
 const MCard = ({ title, description, onClick }) => {
     return (
@@ -39,7 +40,7 @@ const MCard = ({ title, description, onClick }) => {
 const HomePage = () => {
     const navigate = useNavigate();
     const { isOpen, onOpen, onClose } = useDisclosure();
-
+    const { isOpen: isOpen2, onOpen: onOpen2, onClose: onClose2 } = useDisclosure();
     const handleCardClick = (title) => {
         if (title === "All resources") {
             navigate("/all/resources");
@@ -47,6 +48,8 @@ const HomePage = () => {
             navigate("/onboard/new");
         } else if (title === "Assign KT") {
             onOpen(); // Open the AssignKT modal if the card title is "Assign KT"
+        }else if (title === "Assign Action Item") {
+            onOpen2(); 
         }
         // Add more conditions for other cards as needed
     };
@@ -55,7 +58,7 @@ const HomePage = () => {
         { title: "All resources", description: "Here are the biggest enterprise technology acquisitions of 2021 so far." },
         { title: "Onboard an User", description: "Do all the onboarding formalities" },
         { title: "Assign KT", description: "Exploring the latest trends in technology and innovation." },
-        { title: "To be added", description: "Understanding the implications of artificial intelligence in our daily lives." },
+        { title: "Assign Action Item", description: "Understanding the implications of artificial intelligence in our daily lives." },
     ];
 
     return (
@@ -69,6 +72,7 @@ const HomePage = () => {
                 />
             ))}
             <AssignKT isOpen={isOpen} onClose={onClose} />
+            <AssignActionItem isOpen={isOpen2} onClose={onClose2}/>
         </div>
     );
 };
