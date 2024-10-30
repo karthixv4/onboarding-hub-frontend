@@ -18,23 +18,37 @@ export const responseState = atom({
 export const resourceForm = atom({
   key: "resourceForm",
   default: {
-      email: "",
-      role: "",
-      team: "",
-      manager: "",
-      location: "",
-      phone: "",
-      joiningDate: "",
-      trainingStartDate: ""
+    email: "",
+    role: "",
+    team: "",
+    manager: "",
+    location: "",
+    phone: "",
+    joiningDate: "",
+    trainingStartDate: ""
   }
 });
 
 export const KTDataAtom = atom({
   key: 'KTDataAtom',
-  default: { 
-      assignee: '',
-      description: '',
-      status: 'Not Started',
-      dateRange: null,
+  default: {
+    name: '',
+    assignee: 0,
+    description: '',
+    status: 'Not Started',
+    dateRange: null,
+    remarks: ''
   },
+});
+
+// Atom for storing the list of users
+export const userListState = atom({
+  key: "userListState", // Unique ID (with respect to other atoms/selectors)
+  default: [], // Default value (initial state)
+});
+
+// Atom for storing the currently selected user
+export const selectedUserState = atom({
+  key: "selectedUserState", // Unique ID (with respect to other atoms/selectors)
+  default: null, // Default value (initial state)
 });

@@ -71,8 +71,8 @@ const HomePage = () => {
                     onClick={() => handleCardClick(card.title)} 
                 />
             ))}
-            <AssignKT isOpen={isOpen} onClose={onClose} />
-            <AssignActionItem isOpen={isOpen2} onClose={onClose2}/>
+            <AssignKT isOpen={isOpen} onClose={onClose} dataObject={{fromTable: false, item: null}} />
+            <AssignActionItem isOpen={isOpen2} onClose={onClose2} />
         </div>
     );
 };

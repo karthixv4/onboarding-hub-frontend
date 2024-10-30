@@ -1,38 +1,57 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
     Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Textarea,
-    RadioGroup, Radio, DateRangePicker, Select, SelectItem
+    RadioGroup, Radio, DateRangePicker, Select, SelectItem,
+    Input
 } from "@nextui-org/react";
 import { useRecoilState } from 'recoil';
 import { KTDataAtom } from "../recoil/atom/atoms";
-import axios from 'axios';
-import { createKTPlan } from "../services/api";
-export default function AssignKT({ isOpen, onClose }) {
+import { createKTPlan, fetchAllResources } from "../services/api";
+export default function AssignKT({ isOpen, onClose, dataObject }) {
     const [formData, setFormData] = useRecoilState(KTDataAtom);
+    const [resources, setResources] = useState({});
+    useEffect(() => {
+        async function getAllResources() {
+            const resources = await fetchAllResources();
+            setResources(resources);
+        }
+
+        // Directly call the function based on the condition
+        if (dataObject.fromTable) {
+            setResources(dataObject.user);
+            console.log("HEY HEY");
+        } else {
+            getAllResources();
+            console.log("HEY HEY 2");
+        }
+
+        // Optionally, you can still call `getAllResources` if needed
+        // getAllResources();
+    }, [dataObject]);
+
     const handleSubmit = async () => {
         const { start, end } = formData.dateRange;
-    
+
         try {
             // Create new Date objects for ISO format
             const startDate = new Date(start.year, start.month - 1, start.day); // month is 0-indexed
             const endDate = new Date(end.year, end.month - 1, end.day); // month is 0-indexed
-    
-            // Prepare the payload
+
+
             const payload = {
-                resourceId: 1,
+                resourceId: Number(formData.assignee),
                 description: formData.description,
                 progress: formData.status,
-                startDate: startDate.toISOString(), // Format to ISO 8601
-                endDate: endDate.toISOString(),     // Format to ISO 8601
+                startDate: startDate.toISOString(),
+                endDate: endDate.toISOString(),
+                name: formData.name,
+                remarks: formData.remarks
             };
-    
-            await createKTPlan(payload); // Adjust the API endpoint as necessary
-            
-            // Close the modal after successful submission
+
+            await createKTPlan(payload);
             onClose();
         } catch (error) {
             console.error("Error submitting form:", error);
-            // Handle error appropriately (e.g., show a notification)
         }
     };
 
@@ -45,6 +64,12 @@ export default function AssignKT({ isOpen, onClose }) {
     };
 
     const handleDescriptionChange = (value) => {
+        if (dataObject.fromTable) {
+            setFormData(prev => ({
+                ...prev,
+                assignee: resources.id,
+            }));
+        }
         setFormData(prev => ({
             ...prev,
             description: value,
@@ -58,6 +83,19 @@ export default function AssignKT({ isOpen, onClose }) {
         }));
     };
 
+    const handleNameChange = (value) => {
+        setFormData(prev => ({
+            ...prev,
+            name: value,
+        }));
+    };
+
+    const handleRemarksChange = (value) => {
+        setFormData(prev => ({
+            ...prev,
+            remarks:value,
+        }));
+    };
     const handleDateRangeChange = (value) => {
         setFormData(prev => ({
             ...prev,
@@ -76,15 +114,33 @@ export default function AssignKT({ isOpen, onClose }) {
                     <>
                         <ModalHeader className="flex flex-col gap-1">Assign KT</ModalHeader>
                         <ModalBody>
-                            <Select
+                            {!dataObject.fromTable ? <Select
                                 onChange={handleAssigneeChange} // Updated for Select
                                 label="Select Assignee"
                                 placeholder="Select an Assignee"
                                 className="max-w"
-                                items={animals}
+                                items={resources}
                             >
-                                {(animal) => <SelectItem key={animal.key}>{animal.label}</SelectItem>}
+                                {(resource) => <SelectItem key={resource.id}>{resource.user.name}</SelectItem>}
                             </Select>
+                                :
+                                <Input
+                                    isDisabled
+                                    type="email"
+                                    label="Email"
+                                    defaultValue={resources.userEmail}
+                                    className="max-w-xs"
+                                />
+                            }
+                            <Input
+                                
+                                type="text"
+                                label="Name"
+                                value={formData.name || ''}
+                                placeholder="Name of KT"
+                                onChange={(e) => handleNameChange(e.target.value)}
+                                className="max-w-xs"
+                            />
                             <Textarea
                                 label="Description"
                                 placeholder="What is this KT about?"
@@ -105,6 +161,13 @@ export default function AssignKT({ isOpen, onClose }) {
                                 label="Date"
                                 className="max-w"
                                 onChange={handleDateRangeChange} // Updated for DateRangePicker
+                            />
+                             <Textarea
+                                label="Description"
+                                placeholder="Any remarks ?"
+                                className="max-w"
+                                value={formData.remarks || ''}
+                                onChange={(e) => handleRemarksChange(e.target.value)} // Updated for Textarea
                             />
                         </ModalBody>
                         <ModalFooter>

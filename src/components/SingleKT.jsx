@@ -15,6 +15,7 @@ import SingleActionItem from './SingleActionItem';
 import Sample from "./Sample";
 
 export default function SingleKT({ onClose, isOpen, kt }) {
+  console.log("KT: ", kt)
   const [status, setStatus] = useState(kt ? kt.status : "NOT_STARTED");
   const [remarks, setRemarks] = useState("");
   const { isOpen: isSecondModalOpen, onOpen: openSecondModal, onClose: closeSecondModal } = useDisclosure();

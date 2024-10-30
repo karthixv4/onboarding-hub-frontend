@@ -53,3 +53,39 @@ export const updateActionItem=async(id, data)=>{
     throw new Error(error.response.data.message || 'Registration failed'); // Handle errors
 }
 }
+
+export const fetchAllUsers=async()=>{
+  try {
+    const response = await axios.get(`http://localhost:5000/api/user/all`);
+    return response.data; // Return the response data
+  } catch (error) {
+    throw new Error(error.response.data.message || 'Registration failed'); // Handle errors
+}
+}
+
+export const onBoardUser = async(data)=>{
+  try {
+    const response = await axios.post('http://localhost:5000/api/resources/', data);
+    return response.data; // Return the response data
+  } catch (error) {
+    throw new Error(error.response.data.message || 'Registration failed'); // Handle errors
+  }
+}
+
+export const fetchAllResources = async (signal = undefined) => {
+  try {
+    const response = await axios.get(`http://localhost:5000/api/resources`, { signal });
+    return response.data; // Return the response data
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Request failed'); // Handle errors
+  }
+};
+
+export const AssignInitialTasks = async(data)=>{
+  try {
+    const response = await axios.post('http://localhost:5000/api/initialSetup/', data);
+    return response.data; // Return the response data
+  } catch (error) {
+    throw new Error(error.response.data.message || 'Registration failed'); // Handle errors
+  }
+}
