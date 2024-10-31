@@ -4,7 +4,7 @@ import {
   , Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure
 } from "@nextui-org/react";
 import { useAsyncList } from "@react-stately/data";
-import { fetchAllResources } from "../services/api";
+import { fetchAllResources, fetchAllResourcesWithKT } from "../services/api";
 import SingleResourceView from "./SingleResourceView";
 // import {EditIcon} from "./EditIcon";
 // import {DeleteIcon} from "./DeleteIcon";
@@ -29,7 +29,7 @@ export default function ResourceTable() {
   }
   let list = useAsyncList({
     async load({ signal }) {
-      let res = await fetchAllResources(signal);
+      let res = await fetchAllResourcesWithKT(signal);
       setIsLoading(false);
 
       return {

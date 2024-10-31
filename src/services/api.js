@@ -89,3 +89,39 @@ export const AssignInitialTasks = async(data)=>{
     throw new Error(error.response.data.message || 'Registration failed'); // Handle errors
   }
 }
+
+export const updateKTPlan = async(number,data)=>{
+  try {
+    const response = await axios.put(`http://localhost:5000/api/kt/${number}`, data);
+    return response.data; // Return the response data
+  } catch (error) {
+    throw new Error(error.response.data.message || 'Registration failed'); // Handle errors
+  }
+}
+
+export const fetchAllResourcesWithKT = async (signal = undefined) => {
+  try {
+    const response = await axios.get(`http://localhost:5000/api/resources/withKT`, { signal });
+    return response.data; // Return the response data
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Request failed'); // Handle errors
+  }
+};
+
+export const fetchResourceById = async(number)=>{
+  try {
+    const response = await axios.get(`http://localhost:5000/api/resources/${number}`);
+    return response.data; // Return the response data
+  } catch (error) {
+    throw new Error(error.response.data.message || 'Registration failed'); // Handle errors
+  }
+}
+
+export const UpdateInitialTasks = async(number, data)=>{
+  try {
+    const response = await axios.put(`http://localhost:5000/api/initialSetup/${number}`, data);
+    return response.data; // Return the response data
+  } catch (error) {
+    throw new Error(error.response.data.message || 'Registration failed'); // Handle errors
+  }
+}

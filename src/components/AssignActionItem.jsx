@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
     Modal,
     ModalContent,
@@ -9,25 +9,49 @@ import {
     Textarea,
     Switch,
     Select,
-    SelectItem
+    SelectItem,
+    Input
 } from "@nextui-org/react";
 import { useRecoilState } from 'recoil';
 import { KTDataAtom } from "../recoil/atom/atoms";
-import { createActionItem } from "../services/api"; // Ensure this API function is defined
+import { createActionItem, fetchAllResourcesWithKT, fetchResourceById } from "../services/api"; // Ensure this API function is defined
 
-export default function AssignActionItem({ isOpen, onClose }) {
+export default function AssignActionItem({ isOpen, onClose, dataObject }) {
+    console.log("GIVEN KT: ", dataObject.kt);
     const [formData, setFormData] = useRecoilState(KTDataAtom);
+    const [resources, setResources] = useState();
+    const [selectedResource, setSelectedResource] = useState();
+    useEffect(() => {
+        async function getAllResources() {
+            const resources = await fetchAllResourcesWithKT();
+            setResources(resources);
+        }
 
+        async function getResourceById(id) {
+            const resource = await fetchResourceById(id);
+            setResources(resource);
+        }
+
+
+
+        if (dataObject.fromTable) {
+            getResourceById(dataObject?.resourceId);
+        } else {
+            getAllResources();
+        }
+
+    }, [dataObject]);
     const handleSubmit = async () => {
         try {
+            
             const payload = {
-                ktPlanId: 1, // Update according to your form state
+                ktPlanId: dataObject?.fromTable ? Number(dataObject?.kt?.id): Number(formData.selectedKT), // Update according to your form state
                 description: formData.description,
-                isCompleted: formData.isCompleted,
+                completed: formData.isCompleted || false,
             };
 
             await createActionItem(payload); // Adjust the API endpoint as necessary
-            
+
             // Close the modal after successful submission
             onClose();
         } catch (error) {
@@ -57,6 +81,15 @@ export default function AssignActionItem({ isOpen, onClose }) {
         }));
     };
 
+    const handleAssigneeChange = (value) => {
+        const id = value.target.value;
+        const res = resources.find((resource) => resource.id == id);
+        setFormData(prev => ({
+            ...prev,
+            assignee: res,
+        }));
+    };
+
     return (
         <Modal
             isOpen={isOpen}
@@ -68,17 +101,46 @@ export default function AssignActionItem({ isOpen, onClose }) {
                     <>
                         <ModalHeader className="flex flex-col gap-1">Assign Action Item</ModalHeader>
                         <ModalBody>
-                            <Select
-                                onChange={handleKTChange}
-                                label="Select KT"
-                                placeholder="Select a KT"
+
+                            {!dataObject.fromTable ? <Select
+                                onChange={handleAssigneeChange} // Updated for Select
+                                label="Select Assignee"
+                                placeholder="Select an Assignee"
                                 className="max-w"
+                                items={resources}
                             >
-                                {/* Replace with actual KTs */}
-                                {ktOptions.map(kt => (
-                                    <SelectItem key={kt.key}>{kt.label}</SelectItem>
-                                ))}
+                                {(resource) => <SelectItem key={resource.id}>{resource.user.name}</SelectItem>}
                             </Select>
+                                :
+                                <Input
+                                    isDisabled
+                                    type="email"
+                                    label="Email"
+                                    defaultValue={resources.userEmail}
+                                    className="max-w-xs"
+                                />
+                            }
+                            {!dataObject.fromTable ?
+                                <Select
+                                    onChange={handleKTChange}
+                                    label="Select KT"
+                                    placeholder="Select a KT"
+                                    className="max-w"
+                                >
+                                    {/* Replace with actual KTs */}
+                                    {formData?.assignee?.ktPlans?.map(kt => (
+                                        <SelectItem key={kt.id}>{kt.name || "placeholder KT name"}</SelectItem>
+                                    ))}
+                                </Select>
+                                :
+                                <Input
+                                    isDisabled
+                                    type="text"
+                                    label="KT"
+                                    defaultValue={dataObject?.kt?.name}
+                                    className="max-w-xs"
+                                />
+                            }
                             <Textarea
                                 label="Action Item Description"
                                 placeholder="What is the action item?"

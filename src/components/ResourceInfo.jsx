@@ -63,6 +63,12 @@ export default function ResourceInfo() {
     };
 
     const handleToggleChange = (checked) => {
+        if(checked){
+            setSelectedUser((prev) => ({
+                ...prev,
+                initialSetup: [],
+            }));   
+        }
         setSelectedUser(prev => ({
             ...prev,
             isCompleted: checked.target.checked,
@@ -96,7 +102,6 @@ export default function ResourceInfo() {
     // Handle form submission
     const handleSubmit = async (event) => {
         event.preventDefault();
-        console.log("selected user: ", selectedUser)
         const userData = {
             userId: selectedUser?.email,
             onboardingStatus: selectedUser?.status,
@@ -112,7 +117,6 @@ export default function ResourceInfo() {
                 await sendInitialTasks(response.id);
                 navigate("/dashboard");
             }
-            console.log("Response: ", response)
          
         } catch (error) {
             console.error("Error submitting user data:", error);

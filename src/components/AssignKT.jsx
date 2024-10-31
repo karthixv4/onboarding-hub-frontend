@@ -19,10 +19,8 @@ export default function AssignKT({ isOpen, onClose, dataObject }) {
         // Directly call the function based on the condition
         if (dataObject.fromTable) {
             setResources(dataObject.user);
-            console.log("HEY HEY");
         } else {
             getAllResources();
-            console.log("HEY HEY 2");
         }
 
         // Optionally, you can still call `getAllResources` if needed

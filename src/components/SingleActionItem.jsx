@@ -11,13 +11,16 @@ import {
     ModalContent,
     ModalFooter,
     Card,
-    CardBody
+    CardBody,
+    useDisclosure
 } from "@nextui-org/react";
 import { updateActionItem } from '../services/api';
-const SingleActionItem = ({ isOpen, onClose, actionItems }) => {
+import AssignActionItem from './AssignActionItem';
+const SingleActionItem = ({ isOpen, onClose, item }) => {
+    const { isOpen: isOpen2, onOpen: onOpen2, onClose: onClose2 } = useDisclosure();
     const [activeTab, setActiveTab] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [updatedItems, setUpdatedItems] = useState(actionItems);
+    const [updatedItems, setUpdatedItems] = useState(item?.actionItems);
 
     // Handle the status change of the switch for the currently active item
     const handleStatusChange = (index) => {
@@ -31,16 +34,14 @@ const SingleActionItem = ({ isOpen, onClose, actionItems }) => {
         try {
             // Prepare the payload with only the active action item
             const currentItem = updatedItems[activeTab]; // Get the active action item
+            const payload = {
+                description: currentItem.description,
+                completed: currentItem.completed
+            }
+            const response = await updateActionItem(currentItem.id, payload)
 
-            const response = await fetch("YOUR_API_ENDPOINT_HERE", {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(currentItem), // Send only the active item in the request payload
-            });
-
-            if (response.ok) {
+            if (response) {
+                onClose();
                 console.log("Update successful!");
                 // Handle success (optional)
             } else {
@@ -56,9 +57,16 @@ const SingleActionItem = ({ isOpen, onClose, actionItems }) => {
     return (
         <Modal isOpen={isOpen} onOpenChange={onClose} size="4xl">
             <ModalContent>
-                <ModalHeader>
-                    <h2>Action Items</h2>
-                </ModalHeader>
+                <div className="flex justify-between items-center">
+                    <ModalHeader>
+                        <h2>Action Items</h2>
+                    </ModalHeader>
+                    <ModalHeader className="mr-4">
+                    <Button color="primary">
+                        Assign one!
+                    </Button>
+                    </ModalHeader>
+                </div>
                 <ModalBody>
                     <Tabs
                         aria-label="Action Items"
@@ -66,28 +74,43 @@ const SingleActionItem = ({ isOpen, onClose, actionItems }) => {
                         selectedValue={activeTab}
                         onSelectionChange={setActiveTab}
                     >
-                        {updatedItems.map((item, index) => (
-                            <Tab key={index} title={item.description}>
-                                <Card>
-                                    <CardBody>
-                                        <Textarea
-                                            isDisabled
-                                            label="Action Item Description"
-                                            placeholder="What is the action item?"
-                                            className="max-w"
-                                            value={item.description}
-                                        />
-                                        <div className="flex items-center py-2">
-                                            <Switch
-                                                checked={item.completed}
-                                                onChange={() => handleStatusChange(index)} // Toggle the status
+
+                        {console.log("Actions items: ", updatedItems, ", isItNotEmpty: ", updatedItems?.length > 0)}
+                        {!updatedItems?.length > 0 ? <Tab title="No Action Items">
+                            <Card>
+                                <CardBody>
+                                    <h4>No action items assigned. You can create one.</h4>
+                                    <Button color="primary" onPress={onOpen2}>
+                                        Click here to create one
+                                    </Button>
+                                    <AssignActionItem isOpen={isOpen2} onClose={onClose2} dataObject={{ fromTable: true, resourceId: item?.resourceId, kt: item }} />
+                                </CardBody>
+                            </Card>
+                        </Tab> :
+                            updatedItems.map((item, index) => (
+                                <Tab key={index} title={item.description}>
+                                    <Card>
+                                        <CardBody>
+                                            <Textarea
+                                                isDisabled
+                                                label="Action Item Description"
+                                                placeholder="What is the action item?"
+                                                className="max-w"
+                                                value={item.description}
                                             />
-                                            <span className="ml-2">Completed</span>
-                                        </div>
-                                    </CardBody>
-                                </Card>
-                            </Tab>
-                        ))}
+                                            <div className="flex items-center py-2">
+
+                                                <Switch
+                                                    isSelected={item.completed || false}
+                                                    onChange={() => handleStatusChange(index)} // Toggle the status
+                                                />
+                                                <span className="ml-2">Completed</span>
+                                            </div>
+                                        </CardBody>
+                                    </Card>
+                                </Tab>
+                            ))
+                        }
                     </Tabs>
                 </ModalBody>
                 <ModalFooter>

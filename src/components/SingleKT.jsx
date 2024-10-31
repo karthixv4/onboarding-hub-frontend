@@ -15,7 +15,6 @@ import SingleActionItem from './SingleActionItem';
 import Sample from "./Sample";
 
 export default function SingleKT({ onClose, isOpen, kt }) {
-  console.log("KT: ", kt)
   const [status, setStatus] = useState(kt ? kt.status : "NOT_STARTED");
   const [remarks, setRemarks] = useState("");
   const { isOpen: isSecondModalOpen, onOpen: openSecondModal, onClose: closeSecondModal } = useDisclosure();
@@ -25,7 +24,6 @@ export default function SingleKT({ onClose, isOpen, kt }) {
   };
 
   const handleNewOnClick = () => {
-    console.log("Opening second modal");
     openSecondModal(); // This should open the second modal
   };
 
@@ -80,7 +78,7 @@ export default function SingleKT({ onClose, isOpen, kt }) {
               onPress={handleNewOnClick}
               className="my-4"
             >
-              Open Action Item Details
+              Action items related to this
             </Button>
 
             <Textarea

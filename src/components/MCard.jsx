@@ -72,7 +72,7 @@ const HomePage = () => {
                 />
             ))}
             <AssignKT isOpen={isOpen} onClose={onClose} dataObject={{fromTable: false, item: null}} />
-            <AssignActionItem isOpen={isOpen2} onClose={onClose2} />
+            <AssignActionItem isOpen={isOpen2} onClose={onClose2} dataObject={{fromTable: false, item: null}} />
         </div>
     );
 };

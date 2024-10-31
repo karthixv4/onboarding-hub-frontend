@@ -14,42 +14,53 @@ import {
     CardBody,
     Input,
     RadioGroup,
-    Radio
+    Radio,
+    useDisclosure
 } from "@nextui-org/react";
-import { updateActionItem } from '../services/api';
+import { updateActionItem, updateKTPlan } from '../services/api';
+import SingleActionItem from './SingleActionItem';
+
 const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
-  
+
     const [activeTab, setActiveTab] = useState(0);
     const [loading, setLoading] = useState(false);
     const [updatedItems, setUpdatedItems] = useState(KTs);
-    useEffect(()=>{
-            setUpdatedItems(KTs)
-    },[KTs])
-    console.log("KTT: ", updatedItems)
-    // Handle the status change of the switch for the currently active item
-    const handleStatusChange = (index) => {
+    const { isOpen: isOpen2, onOpen: onOpen2, onClose: onClose2 } = useDisclosure();
+    useEffect(() => {
+        setUpdatedItems(KTs);
+    }, [KTs]);
+
+    const handleStatusChange = (index, newStatus) => {
         const newItems = [...updatedItems];
-        newItems[index].completed = !newItems[index].completed; // Toggle the completion status
-        setUpdatedItems(newItems); // Update the state with new values
+        newItems[index].progress = newStatus; // Update the progress status
+        setUpdatedItems(newItems);
+    };
+
+    const handleRemarksChange = (index, newRemarks) => {
+        const newItems = [...updatedItems];
+        newItems[index].remarks = newRemarks; // Update the remarks for the specific tab
+        setUpdatedItems(newItems);
     };
 
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            // Prepare the payload with only the active action item
-            const currentItem = updatedItems[activeTab]; // Get the active action item
+            const currentItem = updatedItems[activeTab]; // Get the active item
 
-            const response = await fetch("YOUR_API_ENDPOINT_HERE", {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(currentItem), // Send only the active item in the request payload
-            });
+            const payload = {
+                progress: currentItem.progress,
+                remarks: currentItem.remarks
+            }
 
-            if (response.ok) {
-                console.log("Update successful!");
-                // Handle success (optional)
+            const response = await updateKTPlan(currentItem.id, payload);
+
+            if (response) {
+                // Move to the next tab if it exists, otherwise close the modal
+                if (activeTab < updatedItems.length - 1) {
+                    setActiveTab(activeTab + 1); // Move to the next tab
+                } else {
+                    onClose(); // Close the modal if there are no more tabs
+                }
             } else {
                 console.error("Update failed:", response.statusText);
             }
@@ -58,6 +69,10 @@ const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleNewOnClick = () => {
+        onOpen2(); // This should open the second modal
     };
 
     return (
@@ -69,39 +84,54 @@ const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
                 <ModalBody>
                     <Tabs
                         aria-label="KTs"
-                        color='success'
+                        color="success"
                         selectedValue={activeTab}
                         onSelectionChange={setActiveTab}
                     >
                         {updatedItems?.map((item, index) => (
-                            <Tab key={index} title={item.name}>
-                                {console.log("SINGLE KT: " , item)}
+                            <Tab key={index} title={item.name || "Placeholder KT"}>
                                 <Card>
-                                    <CardBody>
+                                    <CardBody className=''>
                                         <Input
                                             isDisabled
                                             type="text"
                                             label="Name"
-                                            value={item.name}
-                                            className="max-w-xs"
+                                            value={item.name || "Placeholder KT"}
+                                            className="max-w-xs pb-5"
                                         />
                                         <Textarea
                                             isDisabled
-                                            label="Action Item Description"
-                                            placeholder="What is the action item?"
-                                            className="max-w"
+                                            label="KT Description"
+                                            placeholder="What is the KT about ?"
+                                            className="max-w pb-5"
                                             value={item.description}
                                         />
                                         <RadioGroup
                                             label="Select Status"
                                             orientation="horizontal"
+                                            className='pb-5'
                                             value={item.progress}
-                                            // onChange={handleStatusChange} // Updated for RadioGroup
+                                            onChange={(e) => handleStatusChange(index, e.target.value)} // Update on status change
                                         >
                                             <Radio value="NOT_STARTED">Not Started</Radio>
                                             <Radio value="IN_PROGRESS">In Progress</Radio>
                                             <Radio value="COMPLETED">Completed</Radio>
                                         </RadioGroup>
+                                        <Button
+                                            color="secondary"
+                                            onPress={handleNewOnClick}
+                                            className="my-4"
+                                        >
+                                            Action items related to this KT
+                                        </Button>
+                                        <Textarea
+                                            label="Remarks"
+                                            placeholder="Please add remarks"
+                                            className="max-w pb-5"
+                                            value={item.remarks}
+                                            onChange={(e) => handleRemarksChange(index, e.target.value)} // Update on remarks change
+                                        />
+                                        <SingleActionItem isOpen={isOpen2} onClose={onClose2} item={item} />
                                     </CardBody>
                                 </Card>
                             </Tab>
