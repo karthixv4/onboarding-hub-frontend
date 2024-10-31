@@ -12,34 +12,55 @@ import {
     ModalFooter,
     Card,
     CardBody,
-    useDisclosure
 } from "@nextui-org/react";
 import { updateActionItem } from '../services/api';
-import AssignActionItem from './AssignActionItem';
-const SingleActionItem = ({ isOpen, onClose, item }) => {
-
-    const { isOpen: isOpen2, onOpen: onOpen2, onClose: onClose2 } = useDisclosure();
+import { useRecoilState } from 'recoil';
+import { ktDataAtom, selectedKTAtom } from '../recoil/atom/user/userAtoms';
+const UserSingleActionItem = ({ isOpen, onClose }) => {
+    const [selectedKT, setSelectedKT] = useRecoilState(selectedKTAtom);
     const [activeTab, setActiveTab] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [updatedItems, setUpdatedItems] = useState(item?.actionItems);
-    console.log("updatedItems: ", updatedItems);
-    // Handle the status change of the switch for the currently active item
+    const [ktData, setKtData] = useRecoilState(ktDataAtom); 
+  
+
     const handleStatusChange = (index) => {
-        const newItems = [...updatedItems];
-        newItems[index].completed = !newItems[index].completed; // Toggle the completion status
-        setUpdatedItems(newItems); // Update the state with new values
-    };
+        if (!selectedKT || !selectedKT.actionItems) return;
+    
+        const newActionItems = selectedKT.actionItems.map((item, i) => 
+          i === index ? { ...item, completed: !item.completed } : item // Toggle completed status
+        );
+    
+        setSelectedKT({
+          ...selectedKT, 
+          actionItems: newActionItems, 
+        });
+      };
 
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            // Prepare the payload with only the active action item
-            const currentItem = updatedItems[activeTab]; // Get the active action item
+            console.log("Selected KT: ", selectedKT);
+            const currentItem = selectedKT.actionItems[activeTab]; 
             const payload = {
                 description: currentItem.description,
                 completed: currentItem.completed
             }
             const response = await updateActionItem(currentItem.id, payload)
+            setSelectedKT((prevKT) => {
+                const updatedActionItems = prevKT.actionItems.map((item) =>
+                  item.id === response.id ? { ...item, completed: response.completed } : item
+                );
+                // Return the updated selectedKT
+                return {
+                  ...prevKT,
+                  actionItems: updatedActionItems,
+                };
+              });
+
+              const updatedKtData = ktData.map((item) =>
+                item.id === selectedKT.id ? selectedKT : item
+              );
+              setKtData(updatedKtData);
 
             if (response) {
                 onClose();
@@ -61,12 +82,6 @@ const SingleActionItem = ({ isOpen, onClose, item }) => {
                     <ModalHeader>
                         <h2>Action Items</h2>
                     </ModalHeader>
-                    <ModalHeader className="mr-4">
-                    <Button color="primary" onPress={onOpen2}>
-                        Assign one!
-                    </Button>
-                 <AssignActionItem isOpen={isOpen2} onClose={onClose2} dataObject={{ fromTable: true, resourceId: item?.resourceId, kt: item }} />
-                    </ModalHeader>
                 </div>
                 <ModalBody>
                     <Tabs
@@ -76,18 +91,14 @@ const SingleActionItem = ({ isOpen, onClose, item }) => {
                         onSelectionChange={setActiveTab}
                     >
 
-                        {!updatedItems?.length > 0 ? <Tab title="No Action Items">
+                        {!selectedKT?.actionItems?.length > 0 ? <Tab title="No Action Items">
                             <Card>
                                 <CardBody>
-                                    <h4>No action items assigned. You can create one.</h4>
-                                    <Button color="primary" onPress={onOpen2}>
-                                        Click here to create one
-                                    </Button>
-                                    <AssignActionItem isOpen={isOpen2} onClose={onClose2} dataObject={{ fromTable: true, resourceId: item?.resourceId, kt: item }} />
-                                </CardBody>
+                                    <h4>No action items assigned.</h4>
+                               </CardBody>
                             </Card>
                         </Tab> :
-                            updatedItems.map((item, index) => (
+                            selectedKT?.actionItems.map((item, index) => (
                                 <Tab key={index} title={item.description}>
                                     <Card>
                                         <CardBody>
@@ -126,4 +137,4 @@ const SingleActionItem = ({ isOpen, onClose, item }) => {
     );
 };
 
-export default SingleActionItem;
+export default UserSingleActionItem;

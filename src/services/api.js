@@ -125,3 +125,23 @@ export const UpdateInitialTasks = async(number, data)=>{
     throw new Error(error.response.data.message || 'Registration failed'); // Handle errors
   }
 }
+
+export const FetchKTbyResourceId = async(number)=>{
+  try {
+    const response = await axios.get(`http://localhost:5000/api/kt/resource/${number}`);
+    return response.data; // Return the response data
+  } catch (error) {
+    throw new Error(error.response.data.message || 'Registration failed'); // Handle errors
+  }
+}
+
+
+
+export const getInitialSetupsByUser = async(number)=>{
+  try {
+    const response = await axios.get(`http://localhost:5000/api/initialSetup/resource/${number}`);
+    return response.data; // Return the response data
+  } catch (error) {
+    throw new Error(error.response.data.message || 'Registration failed'); // Handle errors
+  }
+}

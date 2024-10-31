@@ -17,7 +17,6 @@ export default function Login() {
     event.preventDefault();
     try {
       const res = await registerUser(user);
-      console.log(res)
       setResponse(res); // Store the API response
       if (res.user) {
         navigate("/dashboard"); // Redirect to dashboard or another route

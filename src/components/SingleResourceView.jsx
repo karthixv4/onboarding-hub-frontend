@@ -88,7 +88,6 @@ const SingleResourceView = ({ isOpen, onClose, item }) => {
         const step = initialSetupSteps.find((step) => step.id === id);
         return step ? { id: step.id, name: step.name, description: step.description, completed: false } : null;
     }).filter(Boolean);
-console.log("updatedSetup: ", updatedSetup);
     setInitialSetupTasks(updatedSetup)
 };
   return (

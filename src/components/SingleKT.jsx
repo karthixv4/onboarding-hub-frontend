@@ -9,47 +9,50 @@ import {
   Textarea,
   RadioGroup,
   Radio,
-  useDisclosure
+  useDisclosure,
+  DateRangePicker,
 } from "@nextui-org/react";
 import SingleActionItem from './SingleActionItem';
-import Sample from "./Sample";
+import { parseDate } from "@internationalized/date";
+import { updateKTPlan } from "../services/api";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import { selectedKTAtom,ktDataAtom } from "../recoil/atom/user/userAtoms";
+import UserSingleActionItem from "./UserSingleActionItem";
 
 export default function SingleKT({ onClose, isOpen, kt }) {
-  const [status, setStatus] = useState(kt ? kt.status : "NOT_STARTED");
-  const [remarks, setRemarks] = useState("");
-  const { isOpen: isSecondModalOpen, onOpen: openSecondModal, onClose: closeSecondModal } = useDisclosure();
-
-  const handleStatusChange = (event) => {
-    setStatus(event.target.value);
+  // Helper function to convert ISO 8601 to 'yyyy-mm-dd'
+  const formatDate = (isoString) => {
+    const date = new Date(isoString);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   };
 
+  const { isOpen: isSecondModalOpen, onOpen: openSecondModal, onClose: closeSecondModal } = useDisclosure();
+  const [selectedKT, setSelectedKT] = useRecoilState(selectedKTAtom);
+  const [ktData, setKtData] = useRecoilState(ktDataAtom); 
+  
   const handleNewOnClick = () => {
-    openSecondModal(); // This should open the second modal
+    openSecondModal();
   };
 
   const handleUpdate = async () => {
     const payload = {
-      id: kt.id,
-      status,
-      remarks,
+      progress: selectedKT?.progress,
+      remarks: selectedKT?.remarks,
     };
 
     try {
-      const response = await fetch("YOUR_API_ENDPOINT_HERE", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      const updated = await updateKTPlan(kt?.id, payload);
 
-      if (response.ok) {
-        console.log("Update successful!");
-      } else {
-        console.error("Update failed:", response.statusText);
-      }
+      setSelectedKT(updated);
+
+      const updatedKtData = ktData.map((item) =>
+        item.id === kt.id ? { ...item, ...updated } : item
+      );
+      setKtData(updatedKtData); 
     } catch (error) {
       console.error("Error occurred:", error);
+    }finally{
+      onClose()
     }
   };
 
@@ -58,15 +61,39 @@ export default function SingleKT({ onClose, isOpen, kt }) {
       <Modal isOpen={isOpen} onOpenChange={onClose} placement="top-center">
         <ModalContent>
           <ModalHeader className="flex flex-col gap-1">
-            <h2>{kt ? kt.title : "Details"}</h2>
-            <span>{kt ? kt.mentor : "N/A"}</span>
+            <h2>{kt ? kt.name : "Details"}</h2>
           </ModalHeader>
           <ModalBody>
+            {kt && (
+              <>
+                <Textarea
+                  isDisabled
+                  label="Description"
+                  placeholder="What is this KT about?"
+                  className="max-w"
+                  value={kt.description}
+                />
+                <DateRangePicker
+                  isReadOnly
+                  defaultValue={{
+                    start: parseDate(formatDate(selectedKT?.startDate)),
+                    end: parseDate(formatDate(selectedKT?.endDate)),
+                  }}
+                  label="Date Range"
+                />
+              </>
+            )}
+
             <RadioGroup
               label="Select Status"
               orientation="horizontal"
-              value={status}
-              onChange={handleStatusChange}
+              value={selectedKT?.progress || "NOT_STARTED"}
+              onChange={(e) => setSelectedKT((kt) => (
+                {
+                  ...kt,
+                  progress: e.target.value
+                }
+              ))}
             >
               <Radio value="NOT_STARTED">Not Started</Radio>
               <Radio value="IN_PROGRESS">In Progress</Radio>
@@ -83,8 +110,13 @@ export default function SingleKT({ onClose, isOpen, kt }) {
 
             <Textarea
               label="Remarks"
-              value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
+              value={selectedKT?.remarks || ""}
+              onChange={(e) => setSelectedKT((kt) => (
+                {
+                  ...kt,
+                  remarks: e.target.value
+                }
+              ))}
               placeholder="Enter your remarks"
               variant="bordered"
               rows={4}
@@ -102,14 +134,9 @@ export default function SingleKT({ onClose, isOpen, kt }) {
       </Modal>
 
       {/* Second Modal (SingleActionItem) */}
-      <SingleActionItem
+      <UserSingleActionItem
         isOpen={isSecondModalOpen}
-        onClose={closeSecondModal}
-        actionItems={[
-          { description: "Task 1", completed: false },
-          { description: "Task 2", completed: true },
-          { description: "Task 3", completed: false },
-        ]}
+        onClose={closeSecondModal} // Pass actual action items
       />
     </>
   );

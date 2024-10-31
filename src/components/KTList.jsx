@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import {
   Table,
   TableHeader,
@@ -9,13 +9,23 @@ import {
   useDisclosure,
 } from "@nextui-org/react";
 import SingleKT from "./SingleKT";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { ktDataAtom, fetchKTDataSelector, selectedKTAtom} from "../recoil/atom/user/userAtoms" // Update the path as necessary
 
-export default function KTList() {
+export default function KTList({ userId }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [selectedKT, setSelectedKT] = useState(null); // State to hold the selected KT
+  const [ktData, setKtData] = useRecoilState(ktDataAtom); // Use the atom for KT data
+  const fetchedKTs = useRecoilValue(fetchKTDataSelector); // Use the selector to fetch KT data
+  const [selectedKT, setSelectedKT] = useRecoilState(selectedKTAtom);
+  useEffect(() => {
+    // Set the fetched data into the atom
+    setKtData(fetchedKTs);
+    console.log("ktdata: ", ktData)
+  }, [fetchedKTs, setKtData]);
 
   const handleRowClick = (kt) => {
     setSelectedKT(kt);
+    console.log("KT: ", kt);
     onOpen(); // Open the modal
   };
 
@@ -28,16 +38,16 @@ export default function KTList() {
         className="dark text-foreground bg-background"
       >
         <TableHeader>
-          <TableColumn>Title</TableColumn>
+          <TableColumn>Name</TableColumn>
           <TableColumn>Mentor</TableColumn>
           <TableColumn>Status</TableColumn>
         </TableHeader>
         <TableBody>
           {ktData.map((kt) => (
             <TableRow key={kt.id} onClick={() => handleRowClick(kt)}>
-              <TableCell>{kt.title}</TableCell>
-              <TableCell>{kt.mentor}</TableCell>
-              <TableCell>{kt.status}</TableCell>
+              <TableCell>{kt.name}</TableCell>
+              <TableCell>{kt.description}</TableCell>
+              <TableCell>{kt.progress}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -46,10 +56,3 @@ export default function KTList() {
     </div>
   );
 }
-
-const ktData = [
-    { id: "1", title: "Tony Reichert", mentor: "CEO", status: "Active" },
-    { id: "2", title: "Zoey Lang", mentor: "Technical Lead", status: "Paused" },
-    { id: "3", title: "Jane Fisher", mentor: "Senior Developer", status: "Active" },
-    { id: "4", title: "William Howard", mentor: "Community Manager", status: "Vacation" },
-  ];

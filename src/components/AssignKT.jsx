@@ -7,6 +7,7 @@ import {
 import { useRecoilState } from 'recoil';
 import { KTDataAtom } from "../recoil/atom/atoms";
 import { createKTPlan, fetchAllResources } from "../services/api";
+
 export default function AssignKT({ isOpen, onClose, dataObject }) {
     const [formData, setFormData] = useRecoilState(KTDataAtom);
     const [resources, setResources] = useState({});

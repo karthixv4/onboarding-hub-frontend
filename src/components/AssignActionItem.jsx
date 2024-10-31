@@ -17,7 +17,6 @@ import { KTDataAtom } from "../recoil/atom/atoms";
 import { createActionItem, fetchAllResourcesWithKT, fetchResourceById } from "../services/api"; // Ensure this API function is defined
 
 export default function AssignActionItem({ isOpen, onClose, dataObject }) {
-    console.log("GIVEN KT: ", dataObject.kt);
     const [formData, setFormData] = useRecoilState(KTDataAtom);
     const [resources, setResources] = useState();
     const [selectedResource, setSelectedResource] = useState();

@@ -3,6 +3,7 @@ import KTList from './KTList';
 import { Link, useNavigate } from 'react-router-dom';
 
 const UserDashboard = () => {
+    const userId = 30;
     const [activeTab, setActiveTab] = useState('about'); // State for managing active tab
 const navigate = useNavigate();
     return (
@@ -48,7 +49,7 @@ const navigate = useNavigate();
                 </div>
             </div>
         </section>
-        <KTList />
+        <KTList userId={userId} />
         </>
     );
 };
