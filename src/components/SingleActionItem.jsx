@@ -22,7 +22,7 @@ const SingleActionItem = ({ isOpen, onClose, item }) => {
     const [activeTab, setActiveTab] = useState(0);
     const [loading, setLoading] = useState(false);
     const [updatedItems, setUpdatedItems] = useState(item?.actionItems);
-    console.log("updatedItems: ", updatedItems);
+
     // Handle the status change of the switch for the currently active item
     const handleStatusChange = (index) => {
         const newItems = [...updatedItems];

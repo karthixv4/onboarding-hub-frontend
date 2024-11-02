@@ -3,29 +3,37 @@ import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDi
 import AssignKT from './AssignKT';
 import ListOfKTAssigned from './ListOfKTAssigned';
 import { AssignInitialTasks, UpdateInitialTasks } from '../services/api';
+import { allItemsState, initialSetupTasksAtom, resourceCompletionPercentageSelector } from '../recoil/atom/manager/managerAtom';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 
 const SingleResourceView = ({ isOpen, onClose, item }) => {
+
+  const [initialSetupTasks, setInitialSetupTasks] = useRecoilState(initialSetupTasksAtom);
+  const setAllItemsState = useSetRecoilState(allItemsState);
+
+  const { ktCompletion, setupCompletion, totalSetupTasks,
+    completedKTPlans,totalKTPlans,
+    completedSetupTasks } = useRecoilValue(resourceCompletionPercentageSelector(item.id));
+
+
   const { isOpen: isOpen2, onOpen: onOpen2, onClose: onClose2 } = useDisclosure();
   const { isOpen: isOpen3, onOpen: onOpen3, onClose: onClose3 } = useDisclosure();
   const { isOpen: isISOpen, onOpen: onISOpen, onClose: onISClose } = useDisclosure();
   const { isOpen: isIS2Open, onOpen: onIS2Open, onClose: onIS2Close } = useDisclosure();
-  const totalKTPlans = item?.ktPlans?.length || 0;
-  const completedKTPlans = item?.ktPlans?.filter(plan => plan.progress === "COMPLETED").length || 0;
-  const completionKTPercentage = totalKTPlans > 0 ? (completedKTPlans / totalKTPlans) * 100 : 0;
 
-  const totalSetupTasks = item?.initialSetup?.setupTasks?.length || 0;
-  const completedSetupTasks = item?.initialSetup?.setupTasks?.filter(task => task.completed).length || 0;
-  const completionTasksPercentage = totalSetupTasks > 0 ? (completedSetupTasks / totalSetupTasks) * 100 : 0;
 
-  // State to track setup tasks and their completion
-  const [initialSetupTasks, setInitialSetupTasks] = useState([]);
   useEffect(() => {
-    // Initialize state with the initial setup tasks from the API response
     setInitialSetupTasks(
-      item?.initialSetup?.setupTasks?.map(task => ({ id: task.id, completed: task.completed, name: task?.name, description: task?.description })) || []
+      item?.initialSetup?.setupTasks?.map(task => ({
+        id: task.id,
+        completed: task.completed,
+        name: task.name,
+        description: task.description
+      })) || []
     );
-  }, [item]);
+    
 
+  }, [item, setInitialSetupTasks]);
   // Handle checkbox selection change
   const handleCheckboxChange = (selectedTaskIds) => {
     const updatedTasks = initialSetupTasks.map(task => ({
@@ -70,6 +78,19 @@ const SingleResourceView = ({ isOpen, onClose, item }) => {
       const response = await UpdateInitialTasks(item.initialSetup.id, payload);
 
       if (response) {
+        setAllItemsState(prevItems =>{
+         const hey =  prevItems.map(prev => 
+            prev.id == response?.resourceId 
+              ? {
+                ...prev,
+                initialSetup : response
+              }
+              : prev
+          ) 
+          return hey
+        }
+        );
+        console.log("ktCompletion, setupCompletion: ", ktCompletion, setupCompletion);
         console.log("Initial setup updated successfully");
       } else {
         console.error("Failed to update initial setup");
@@ -110,13 +131,13 @@ const SingleResourceView = ({ isOpen, onClose, item }) => {
                   </div>
                   <div className='col-span-3 gap-4'>
                     <div className='grid grid-cols-2 gap-10'>
-                      {totalKTPlans > 0 ? (
+                      {item?.ktPlans?.length > 0 ? (
                         <a onClick={onOpen3} className="block max-w-[180px] p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
                           <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">KT Plans</h5>
                           <p className="font-normal text-gray-700 dark:text-gray-400">
                             {completedKTPlans}/{totalKTPlans} KT plans completed
                           </p>
-                          <Progress label="Setup completion" size="sm" value={completionKTPercentage} maxValue={100} color="success" formatOptions={{ style: "percent" }} showValueLabel={true} className="mt-2" />
+                          <Progress label="Setup completion" size="sm" value={ktCompletion} maxValue={100} color="success" formatOptions={{ style: "percent" }} showValueLabel={true} className="mt-2" />
                         </a>
                       ) : (
                         <a onClick={onOpen2} className="block max-w-[180px] p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
@@ -130,8 +151,9 @@ const SingleResourceView = ({ isOpen, onClose, item }) => {
                           <>
                             <p className="font-normal text-gray-700 dark:text-gray-400">
                               {completedSetupTasks}/{totalSetupTasks} tasks completed
+                           
                             </p>
-                            <Progress label="Setup completion" size="sm" value={completionTasksPercentage} maxValue={100} color="success" formatOptions={{ style: "percent" }} showValueLabel={true} className="mt-2" />
+                            <Progress label="Setup completion" size="sm" value={setupCompletion} maxValue={100} color="success" formatOptions={{ style: "percent" }} showValueLabel={true} className="mt-2" />
                             <Modal isOpen={isISOpen} onOpenChange={onISClose} placement="top-center">
                               <ModalContent>
                                 {(onISClose) => (

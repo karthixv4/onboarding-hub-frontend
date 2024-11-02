@@ -39,7 +39,6 @@ const UserSingleActionItem = ({ isOpen, onClose }) => {
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            console.log("Selected KT: ", selectedKT);
             const currentItem = selectedKT.actionItems[activeTab]; 
             const payload = {
                 description: currentItem.description,

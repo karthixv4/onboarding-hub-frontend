@@ -18,7 +18,6 @@ export default function ResourceInfo() {
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
     const navigate = useNavigate();
     useEffect(() => {
-        // Fetch user data from API on component load
         async function getAllUsers() {
             const users = await fetchAllUsers();
             const filteredUsers = users.filter(user => user.onBoardingStartedFlag !== true);

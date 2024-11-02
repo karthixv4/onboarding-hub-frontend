@@ -5,67 +5,65 @@ import {
     Tabs,
     Tab,
     Textarea,
-    Switch,
+    RadioGroup,
+    Radio,
+    useDisclosure,
     ModalHeader,
     ModalBody,
     ModalContent,
     ModalFooter,
     Card,
     CardBody,
-    Input,
-    RadioGroup,
-    Radio,
-    useDisclosure
+    Input
 } from "@nextui-org/react";
-import { fetchResourceById, updateActionItem, updateKTPlan } from '../services/api';
+import { fetchResourceById, updateKTPlan } from '../services/api';
 import SingleActionItem from './SingleActionItem';
 import AssignKT from './AssignKT';
 
 const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
-    console.log("KTs: ", KTs);
     const [activeTab, setActiveTab] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [updatedItems, setUpdatedItems] = useState(KTs);
     const { isOpen: isOpen2, onOpen: onOpen2, onClose: onClose2 } = useDisclosure();
     const { isOpen: isOpen3, onOpen: onOpen3, onClose: onClose3 } = useDisclosure();
-    const [resource, setResource]= useState();
+    const [localKTItems, setLocalKTItems] = useState(KTs);
+    const [resource, setResource] = useState();
+
+    // Update local state when KTs prop changes
     useEffect(() => {
-        setUpdatedItems(KTs);
+        setLocalKTItems(KTs);
     }, [KTs]);
 
     const handleStatusChange = (index, newStatus) => {
-        const newItems = [...updatedItems];
-        newItems[index].progress = newStatus; // Update the progress status
-        setUpdatedItems(newItems);
+        const newItems = [...localKTItems];
+        newItems[index].progress = newStatus;
+        setLocalKTItems(newItems);
     };
 
     const handleRemarksChange = (index, newRemarks) => {
-        const newItems = [...updatedItems];
-        newItems[index].remarks = newRemarks; // Update the remarks for the specific tab
-        setUpdatedItems(newItems);
+        const newItems = [...localKTItems];
+        newItems[index].remarks = newRemarks;
+        setLocalKTItems(newItems);
     };
 
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            const currentItem = updatedItems[activeTab]; // Get the active item
+            const responses = await Promise.all(localKTItems.map(item => 
+                updateKTPlan(item.id, {
+                    progress: item.progress,
+                    remarks: item.remarks,
+                })
+            ));
 
-            const payload = {
-                progress: currentItem.progress,
-                remarks: currentItem.remarks
-            }
-
-            const response = await updateKTPlan(currentItem.id, payload);
-
-            if (response) {
-                // Move to the next tab if it exists, otherwise close the modal
-                if (activeTab < updatedItems.length - 1) {
+            // Check if all updates were successful
+            if (responses.every(response => response)) {
+                if (activeTab < localKTItems.length - 1) {
                     setActiveTab(activeTab + 1); // Move to the next tab
                 } else {
                     onClose(); // Close the modal if there are no more tabs
                 }
             } else {
-                console.error("Update failed:", response.statusText);
+                console.error("Update failed for some items");
             }
         } catch (error) {
             console.error("Error submitting the form:", error);
@@ -74,39 +72,30 @@ const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
         }
     };
 
-    const handleNewOnClick = () => {
-        onOpen2(); // This should open the second modal
-    };
-
     const handleCreateKTClick = async () => {
-        const resourceId = KTs.length > 0 ? KTs[0].resourceId : null;
-        try{
-            await fetchResourceById(resourceId).then((data)=>setResource(data))
-        }catch(error){
-
-        }finally{
-            console.log("Resource: ", resource);
+        const resourceId = localKTItems.length > 0 ? localKTItems[0].resourceId : null;
+        try {
+            const data = await fetchResourceById(resourceId);
+            setResource(data);
             onOpen3();
+        } catch (error) {
+            console.error("Error fetching resource:", error);
         }
-       
-        // setResource(resourceq)
-        
-      
-    }
+    };
 
     return (
         <Modal isOpen={isOpen} onOpenChange={onClose} size="4xl">
             <ModalContent>
-            <div className="flex justify-between items-center">
-                <ModalHeader>
-                    <h2>All KTs</h2>
-                </ModalHeader>
-                <ModalHeader className="mr-4">
-                <Button color="primary" onPress={handleCreateKTClick}>
-                       Create a KT
-                    </Button>
-                    <AssignKT isOpen={isOpen3} onClose={onClose3} dataObject={{fromTable: true, user: resource}} /> 
-                </ModalHeader>
+                <div className="flex justify-between items-center">
+                    <ModalHeader>
+                        <h2>All KTs</h2>
+                    </ModalHeader>
+                    <ModalHeader className="mr-4">
+                        <Button color="primary" onPress={handleCreateKTClick}>
+                            Create a KT
+                        </Button>
+                        <AssignKT isOpen={isOpen3} onClose={onClose3} dataObject={{ fromTable: true, user: resource }} />
+                    </ModalHeader>
                 </div>
                 <ModalBody>
                     <Tabs
@@ -115,10 +104,10 @@ const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
                         selectedValue={activeTab}
                         onSelectionChange={setActiveTab}
                     >
-                        {updatedItems?.map((item, index) => (
+                        {localKTItems?.map((item, index) => (
                             <Tab key={index} title={item.name || "Placeholder KT"}>
                                 <Card>
-                                    <CardBody className=''>
+                                    <CardBody>
                                         <Input
                                             isDisabled
                                             type="text"
@@ -129,7 +118,7 @@ const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
                                         <Textarea
                                             isDisabled
                                             label="KT Description"
-                                            placeholder="What is the KT about ?"
+                                            placeholder="What is the KT about?"
                                             className="max-w pb-5"
                                             value={item.description}
                                         />
@@ -146,7 +135,7 @@ const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
                                         </RadioGroup>
                                         <Button
                                             color="secondary"
-                                            onPress={handleNewOnClick}
+                                            onPress={onOpen2}
                                             className="my-4"
                                         >
                                             Action items related to this KT
@@ -174,7 +163,6 @@ const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
                     </Button>
                 </ModalFooter>
             </ModalContent>
-            
         </Modal>
     );
 };

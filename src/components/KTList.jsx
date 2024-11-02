@@ -20,17 +20,16 @@ export default function KTList({ userId }) {
   useEffect(() => {
     // Set the fetched data into the atom
     setKtData(fetchedKTs);
-    console.log("ktdata: ", ktData)
   }, [fetchedKTs, setKtData]);
 
   const handleRowClick = (kt) => {
     setSelectedKT(kt);
-    console.log("KT: ", kt);
     onOpen(); // Open the modal
   };
 
   return (
     <div className="flex flex-col gap-3 mx-40 my-10">
+      <h1 className="text-2xl font-semibold">My KT Plans</h1> 
       <Table
         color="primary"
         selectionMode="single"
@@ -38,8 +37,8 @@ export default function KTList({ userId }) {
         className="dark text-foreground bg-background"
       >
         <TableHeader>
-          <TableColumn>Name</TableColumn>
-          <TableColumn>Mentor</TableColumn>
+          <TableColumn>KT Name</TableColumn>
+          <TableColumn>KT Description</TableColumn>
           <TableColumn>Status</TableColumn>
         </TableHeader>
         <TableBody>

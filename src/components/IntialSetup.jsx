@@ -18,12 +18,11 @@ const InitialSetup = () => {
   useEffect(() => {
     // Set the fetched data into the atom
     setAllSetups(fetchInitialSetup);
-    console.log("fetchInitialSetup: ", fetchInitialSetup);
   }, [fetchInitialSetup, setAllSetups]);
 
   const handleTaskToggle = async (taskId) => {
     const updatedTasks = allSetups.setupTasks.map((task) => {
-      if (task.id === taskId) {
+      if (task.id == taskId) {
         return { ...task, completed: !task.completed }; // Toggle the completion status
       }
       return task; // Return other tasks unchanged
@@ -33,7 +32,7 @@ const InitialSetup = () => {
 
     const payload = {
       setupCompleted,
-      setupTasks: updatedTasks.map(({ id, completed }) => ({ id, completed })),
+      setupTasks: updatedTasks
     };
 
     try {

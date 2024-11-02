@@ -41,3 +41,12 @@ export const selectedInitialSetup = atom({
     key: 'selectedInitialSetup',
     default: null, 
 });
+
+export const actionItems = selector({
+    key: 'actionItems',
+    get: ({get}) =>{
+        const KTs = get(ktDataAtom);
+        const allActionItems = KTs.flatMap(kt => kt.actionItems);
+        return allActionItems
+    }
+})

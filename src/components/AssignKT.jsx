@@ -127,7 +127,7 @@ export default function AssignKT({ isOpen, onClose, dataObject }) {
                                     isDisabled
                                     type="email"
                                     label="Email"
-                                    defaultValue={resources.userEmail}
+                                    defaultValue={resources?.user?.email}
                                     className="max-w-xs"
                                 />
                             }
