@@ -7,25 +7,30 @@ import {
 import { useRecoilState } from 'recoil';
 import { KTDataAtom } from "../recoil/atom/atoms";
 import { createKTPlan, fetchAllResources } from "../services/api";
+import { allItemsState } from "../recoil/atom/manager/managerAtom";
 
 export default function AssignKT({ isOpen, onClose, dataObject }) {
+    const [allItems, setAllItemsState] = useRecoilState(allItemsState)
+    useEffect(() => {
+        console.log("All Items Updated: ", allItems);
+    }, [allItems]);
     const [formData, setFormData] = useRecoilState(KTDataAtom);
     const [resources, setResources] = useState({});
+
     useEffect(() => {
         async function getAllResources() {
-            const resources = await fetchAllResources();
-            setResources(resources);
+            try {
+                const resources = await fetchAllResources();
+                setResources(resources); // Ensure this is the correct structure
+            } catch (error) {
+                console.error("Error fetching resources:", error);
+            }
         }
-
-        // Directly call the function based on the condition
         if (dataObject.fromTable) {
             setResources(dataObject.user);
         } else {
             getAllResources();
         }
-
-        // Optionally, you can still call `getAllResources` if needed
-        // getAllResources();
     }, [dataObject]);
 
     const handleSubmit = async () => {
@@ -47,7 +52,22 @@ export default function AssignKT({ isOpen, onClose, dataObject }) {
                 remarks: formData.remarks
             };
 
-            await createKTPlan(payload);
+            const response = await createKTPlan(payload);
+            setAllItemsState((prevState) =>
+                prevState.map((resource) => {
+                    if (resource.id === response?.resourceId) {
+                        console.log('Before Update:', resource.ktPlans); // Log before updating
+                        const updatedKtPlans = [...resource.ktPlans, response];
+                        console.log('After Update:', updatedKtPlans); // Log after updating
+                        return {
+                            ...resource,
+                            ktPlans: updatedKtPlans, // Append response to existing ktPlans
+                        };
+                    }
+                    return resource;
+                })
+            );
+            console.log("All Items: ", allItems);
             onClose();
         } catch (error) {
             console.error("Error submitting form:", error);
@@ -92,7 +112,7 @@ export default function AssignKT({ isOpen, onClose, dataObject }) {
     const handleRemarksChange = (value) => {
         setFormData(prev => ({
             ...prev,
-            remarks:value,
+            remarks: value,
         }));
     };
     const handleDateRangeChange = (value) => {
@@ -132,7 +152,7 @@ export default function AssignKT({ isOpen, onClose, dataObject }) {
                                 />
                             }
                             <Input
-                                
+
                                 type="text"
                                 label="Name"
                                 value={formData.name || ''}
@@ -161,7 +181,7 @@ export default function AssignKT({ isOpen, onClose, dataObject }) {
                                 className="max-w"
                                 onChange={handleDateRangeChange} // Updated for DateRangePicker
                             />
-                             <Textarea
+                            <Textarea
                                 label="Description"
                                 placeholder="Any remarks ?"
                                 className="max-w"

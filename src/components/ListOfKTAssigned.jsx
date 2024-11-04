@@ -19,14 +19,18 @@ import {
 import { fetchResourceById, updateKTPlan } from '../services/api';
 import SingleActionItem from './SingleActionItem';
 import AssignKT from './AssignKT';
+import { useRecoilState, useSetRecoilState } from 'recoil';
+import { allItemsState } from '../recoil/atom/manager/managerAtom';
 
 const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
+    const [allItems, setAllItemsState] = useRecoilState(allItemsState)
     const [activeTab, setActiveTab] = useState(0);
     const [loading, setLoading] = useState(false);
     const { isOpen: isOpen2, onOpen: onOpen2, onClose: onClose2 } = useDisclosure();
     const { isOpen: isOpen3, onOpen: onOpen3, onClose: onClose3 } = useDisclosure();
     const [localKTItems, setLocalKTItems] = useState(KTs);
     const [resource, setResource] = useState();
+    // const setAllItemsState = useSetRecoilState(allItemsState);
 
     // Update local state when KTs prop changes
     useEffect(() => {
@@ -34,21 +38,23 @@ const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
     }, [KTs]);
 
     const handleStatusChange = (index, newStatus) => {
-        const newItems = [...localKTItems];
-        newItems[index].progress = newStatus;
+        const newItems = localKTItems.map((item, i) =>
+            i === index ? { ...item, progress: newStatus, modified: true } : item
+        );
         setLocalKTItems(newItems);
     };
-
+    
     const handleRemarksChange = (index, newRemarks) => {
-        const newItems = [...localKTItems];
-        newItems[index].remarks = newRemarks;
+        const newItems = localKTItems.map((item, i) =>
+            i === index ? { ...item, remarks: newRemarks, modified: true } : item
+        );
         setLocalKTItems(newItems);
     };
-
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            const responses = await Promise.all(localKTItems.map(item => 
+            const modifiedItems = localKTItems.filter(item => item.modified);
+            const responses = await Promise.all(modifiedItems.map(item => 
                 updateKTPlan(item.id, {
                     progress: item.progress,
                     remarks: item.remarks,
@@ -57,11 +63,23 @@ const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
 
             // Check if all updates were successful
             if (responses.every(response => response)) {
-                if (activeTab < localKTItems.length - 1) {
-                    setActiveTab(activeTab + 1); // Move to the next tab
-                } else {
-                    onClose(); // Close the modal if there are no more tabs
-                }
+                   setAllItemsState((prevState) =>
+                    prevState.map((resource) => {
+                        // Only update the resource with the matching ID
+                        if (resource.id == responses[0]?.resourceId) {
+                            const updatedKTIds = new Set(responses.map((kt) => kt.id));
+                            const filteredKTPlans = resource.ktPlans.filter((kt) => !updatedKTIds.has(kt.id));
+                            return {
+                                ...resource,
+                                ktPlans: [...filteredKTPlans, ...responses], // Keep existing KTs that aren’t updated, add new updates
+                            };
+                        }
+                        return resource; // Return other resources unchanged
+                    })
+                );
+                    onClose(); 
+                // Reset modified flags after successful submission
+                setLocalKTItems(prevItems => prevItems.map(item => ({ ...item, modified: false })));
             } else {
                 console.error("Update failed for some items");
             }
@@ -71,10 +89,14 @@ const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
             setLoading(false);
         }
     };
+    
 
     const handleCreateKTClick = async () => {
         const resourceId = localKTItems.length > 0 ? localKTItems[0].resourceId : null;
         try {
+           
+            const resource = allItems.find(item => item.id == resourceId)
+            console.log("resource items: ", resource);
             const data = await fetchResourceById(resourceId);
             setResource(data);
             onOpen3();

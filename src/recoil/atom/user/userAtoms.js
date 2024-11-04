@@ -50,3 +50,16 @@ export const actionItems = selector({
         return allActionItems
     }
 })
+
+export const isAuth = atom({
+    key: 'isAuth',
+    default: false
+})
+
+export const roleAtom = atom({
+    key: 'roleAtom',
+    default: {
+        id: 0,
+        role: ''
+    }
+})

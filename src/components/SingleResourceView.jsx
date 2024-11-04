@@ -3,11 +3,11 @@ import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDi
 import AssignKT from './AssignKT';
 import ListOfKTAssigned from './ListOfKTAssigned';
 import { AssignInitialTasks, UpdateInitialTasks } from '../services/api';
-import { allItemsState, initialSetupTasksAtom, resourceCompletionPercentageSelector } from '../recoil/atom/manager/managerAtom';
+import { allItemsState, initialSetupTasksAtom, resourceByIdSelector, resourceCompletionPercentageSelector } from '../recoil/atom/manager/managerAtom';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 
 const SingleResourceView = ({ isOpen, onClose, item }) => {
-
+const resource = useRecoilValue(resourceByIdSelector(item.id));
   const [initialSetupTasks, setInitialSetupTasks] = useRecoilState(initialSetupTasksAtom);
   const setAllItemsState = useSetRecoilState(allItemsState);
 
@@ -24,7 +24,7 @@ const SingleResourceView = ({ isOpen, onClose, item }) => {
 
   useEffect(() => {
     setInitialSetupTasks(
-      item?.initialSetup?.setupTasks?.map(task => ({
+      resource?.initialSetup?.setupTasks?.map(task => ({
         id: task.id,
         completed: task.completed,
         name: task.name,
@@ -33,7 +33,7 @@ const SingleResourceView = ({ isOpen, onClose, item }) => {
     );
     
 
-  }, [item, setInitialSetupTasks]);
+  }, [resource, setInitialSetupTasks]);
   // Handle checkbox selection change
   const handleCheckboxChange = (selectedTaskIds) => {
     const updatedTasks = initialSetupTasks.map(task => ({
@@ -47,7 +47,7 @@ const SingleResourceView = ({ isOpen, onClose, item }) => {
 
       const setupCompleted = initialSetupTasks.length > 0 && initialSetupTasks.every(task => task.completed === true);
       const payload = {
-        resourceId: item.id,
+        resourceId: resource.id,
         setupCompleted: setupCompleted,
         setupTasks: initialSetupTasks
       }
@@ -75,7 +75,7 @@ const SingleResourceView = ({ isOpen, onClose, item }) => {
         setupTasks: initialSetupTasks
       }
 
-      const response = await UpdateInitialTasks(item.initialSetup.id, payload);
+      const response = await UpdateInitialTasks(resource.initialSetup.id, payload);
 
       if (response) {
         setAllItemsState(prevItems =>{
@@ -90,7 +90,6 @@ const SingleResourceView = ({ isOpen, onClose, item }) => {
           return hey
         }
         );
-        console.log("ktCompletion, setupCompletion: ", ktCompletion, setupCompletion);
         console.log("Initial setup updated successfully");
       } else {
         console.error("Failed to update initial setup");
@@ -124,14 +123,14 @@ const SingleResourceView = ({ isOpen, onClose, item }) => {
                     <div className="w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                       <div className="flex flex-col items-center p-10 pb-10">
                         <img className="w-24 h-24 mb-3 rounded-full shadow-lg" src="https://i.pravatar.cc/300" alt="User" />
-                        <h5 className="mb-1 text-xl font-medium text-gray-900 dark:text-white">{item.user.name}</h5>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">{item.position} | {item.team}</span>
+                        <h5 className="mb-1 text-xl font-medium text-gray-900 dark:text-white">{resource.user.name}</h5>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">{resource.position} | {resource.team}</span>
                       </div>
                     </div>
                   </div>
                   <div className='col-span-3 gap-4'>
                     <div className='grid grid-cols-2 gap-10'>
-                      {item?.ktPlans?.length > 0 ? (
+                      {resource?.ktPlans?.length > 0 ? (
                         <a onClick={onOpen3} className="block max-w-[180px] p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
                           <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">KT Plans</h5>
                           <p className="font-normal text-gray-700 dark:text-gray-400">
@@ -167,7 +166,7 @@ const SingleResourceView = ({ isOpen, onClose, item }) => {
                                           value={initialSetupTasks.filter(task => task.completed).map(task => task.id.toString())}
                                           onChange={handleCheckboxChange}
                                         >
-                                          {item?.initialSetup?.setupTasks?.map((step) => (
+                                          {resource?.initialSetup?.setupTasks?.map((step) => (
                                             <Checkbox value={step.id.toString()} key={step.id}>{step.name}</Checkbox>
                                           ))}
                                         </CheckboxGroup>
@@ -246,8 +245,8 @@ const SingleResourceView = ({ isOpen, onClose, item }) => {
           )}
         </ModalContent>
       </Modal>
-      <AssignKT isOpen={isOpen2} onClose={onClose2} dataObject={{ fromTable: true, user: item }} />
-      <ListOfKTAssigned isOpen={isOpen3} onClose={onClose3} KTs={item?.ktPlans} />
+      <AssignKT isOpen={isOpen2} onClose={onClose2} dataObject={{ fromTable: true, user: resource }} />
+      <ListOfKTAssigned isOpen={isOpen3} onClose={onClose3} KTs={resource?.ktPlans} />
 
     </>
   );
