@@ -19,11 +19,11 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
-  Modal,
   useDisclosure,
 } from "@nextui-org/react";
 import { PlusIcon, SearchIcon, ChevronDownIcon } from "./Icons";
 import SingleResourceView from "./SingleResourceView";
+import { useNavigate } from "react-router-dom";
 
 const statusColorMap = {
   NOT_STARTED: "warning",
@@ -41,6 +41,7 @@ const columns = [
 const statusOptions = ["All", "NOT_STARTED", "IN_PROGRESS", "COMPLETED"];
 
 export default function MResTable() {
+  const navigate = useNavigate();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedItem, setSelectedItem] = useState(null);
   const allItems = useRecoilValue(allItemsState);
@@ -51,7 +52,7 @@ export default function MResTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [selectedKeys, setSelectedKeys] = useState(new Set());
-
+  const {isOpen:isOpen2, onOpen:onOpen2, onClose:onClose2} = useDisclosure();
   // Handle filtering
   const filteredItems = useMemo(() => {
     let items = [...allItems];
@@ -113,7 +114,7 @@ export default function MResTable() {
     const startIdx = (currentPage - 1) * rowsPerPage;
     return sortedItems.slice(startIdx, startIdx + rowsPerPage);
   }, [sortedItems, currentPage, rowsPerPage]);
-
+console.log("allItems: ", allItems);
   // Handle column visibility
   const headerColumns = useMemo(() => {
     return columns.filter(column => visibleColumns.has(column.uid));
@@ -130,6 +131,10 @@ export default function MResTable() {
     },
     [sortConfig]
   );
+
+  const handleBoardClick = ()=>{
+navigate('/onboard/new')
+  }
 
   // Handle row selection
   const handleSelectionChange = useCallback(
@@ -279,7 +284,7 @@ export default function MResTable() {
         </Dropdown>
 
         {/* Add New Button */}
-        <Button color="primary" endContent={<PlusIcon />}>
+        <Button color="primary" onClick={handleBoardClick} endContent={<PlusIcon />}>
           Add New
         </Button>
       </div>

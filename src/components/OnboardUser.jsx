@@ -1,21 +1,14 @@
-import React, { useEffect } from "react";
-import {
-    Card, CardHeader, CardBody, CardFooter, Avatar, Button, Select, SelectItem, Input,
-    RadioGroup, Radio, Switch, useDisclosure,
-    Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Link,
-    CheckboxGroup, Checkbox
-} from "@nextui-org/react";
-import { selectedUserState, userListState } from "../recoil/atom/atoms";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, Select, SelectItem, RadioGroup, Radio, Switch, CheckboxGroup, Checkbox, Input } from "@nextui-org/react";
 import { useRecoilState, useResetRecoilState } from "recoil";
+import { selectedUserState, userListState } from "../recoil/atom/atoms";
+import { useEffect } from "react";
 import { AssignInitialTasks, fetchAllUsers, onBoardUser } from "../services/api";
-import { useNavigate } from "react-router-dom";
 
-export default function ResourceInfo() {
+export default function OnboardUser({ isOpen, onClose }) {
     const [userList, setUserList] = useRecoilState(userListState);
     const [selectedUser, setSelectedUser] = useRecoilState(selectedUserState);
     const resetSelectedUser = useResetRecoilState(selectedUserState);
-    const { isOpen, onOpen, onOpenChange } = useDisclosure();
-    const navigate = useNavigate();
+     const { isOpen: isOpen2, onOpen:onOpen2, onClose:onClose2 } = useDisclosure();
     useEffect(() => {
         async function getAllUsers() {
             const users = await fetchAllUsers();
@@ -23,12 +16,11 @@ export default function ResourceInfo() {
             setUserList(filteredUsers);
         }
         getAllUsers();
-        return ()=>{
+        return () => {
             resetSelectedUser();
         }
     }, [setUserList]);
 
-    // Update email, name, and username fields when a user is selected
     const handleUserChange = (id) => {
         const user = userList.find((u) => u.id == id);
         if (user) setSelectedUser(user);
@@ -43,7 +35,7 @@ export default function ResourceInfo() {
     }
 
     const handleISChange = (newValues) => {
-        
+
         const updatedSetup = newValues.map((id) => {
             const step = initialSetupSteps.find((step) => step.id === id);
             return step ? { id: step.id, name: step.name, description: step.description } : null;
@@ -64,11 +56,11 @@ export default function ResourceInfo() {
     };
 
     const handleToggleChange = (checked) => {
-        if(checked){
+        if (checked) {
             setSelectedUser((prev) => ({
                 ...prev,
                 initialSetup: [],
-            }));   
+            }));
         }
         setSelectedUser(prev => ({
             ...prev,
@@ -80,7 +72,7 @@ export default function ResourceInfo() {
         const selectedTasks = selectedUser?.initialSetup?.map(({ name, description }) => ({
             name,
             description
-          })) || [];
+        })) || [];
 
         // Only send API request if there are selected tasks
         if (selectedTasks.length > 0) {
@@ -90,7 +82,7 @@ export default function ResourceInfo() {
                     setupCompleted: false,
                     resourceId: resourceId
                 }
-               const response = await AssignInitialTasks(payload);
+                const response = await AssignInitialTasks(payload);
 
             } catch (error) {
                 console.error("Error sending initial tasks:", error);
@@ -102,7 +94,7 @@ export default function ResourceInfo() {
 
     // Handle form submission
     const handleSubmit = async (event) => {
-        event.preventDefault();
+        onClose();
         const userData = {
             userId: selectedUser?.email,
             onboardingStatus: selectedUser?.status,
@@ -118,89 +110,60 @@ export default function ResourceInfo() {
                 await sendInitialTasks(response.id);
                 navigate("/dashboard");
             }
-         
+
         } catch (error) {
             console.error("Error submitting user data:", error);
         }
     };
     const selectedIds = selectedUser?.initialSetup?.map((step) => step.id) || [];
 
+
     return (
         <>
-            <Card className="max-w p-10 m-10 mr-40 ml-40">
-                <CardHeader className="justify-between">
-                    <div className="flex gap-5">
-                        <Avatar isBordered radius="full" size="md" src="https://nextui.org/avatars/avatar-1.png" />
-                        <div className="flex flex-col gap-1 items-start justify-center">
-                            <h4 className="text-small font-semibold leading-none text-default-600">
-                                {selectedUser?.name || "Zoey Lang"}
-                            </h4>
-                            <h5 className="text-small tracking-tight text-default-400">
-                                {selectedUser?.email || "@zoeylang"}
-                            </h5>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardBody className="px-3 py-0 text-small text-default-400">
-                    <form className="max-w mx-40 my-2" onSubmit={handleSubmit}>
-                        <div className="mb-5">
-                            <Select
-                                placeholder="Select a User"
-                                onChange={(e) => handleUserChange(e.target.value)}
-                                className="w-full"
-                                aria-label="to select a user"
-                            >
-                                {userList.map((user) => (
-                                    <SelectItem key={user.id} value={user.id}>
-                                        {user.name}
-                                    </SelectItem>
-                                ))}
-                            </Select>
-                        </div>
-                        <Input
-                            type="email"
-                            label="Email Address"
-                            value={selectedUser?.email || ""}
-                            className="mb-5"
-                            disabled
-                        />
-                        <div className="relative z-0 w-full mb-5 group">
-                            <input
-                                type="text"
-                                name="role"
-                                id="floating_text"
-                                className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
-                                placeholder=" "
-                                value={selectedUser?.role || ""}
-                                onChange={(e) => handleValueChange(e)}
-                                required
-                            />
-                            <label
-                                htmlFor="floating_text"
-                                className="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
-                            >
-                                Role
-                            </label>
-                        </div>
-                        <div className="relative z-0 w-full mb-5 group">
-                            <input
-                                type="text"
-                                name="team"
-                                id="floating_repeat_text"
-                                className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
-                                placeholder=" "
-                                value={selectedUser?.team || ""}
-                                onChange={(e) => handleValueChange(e)}
-                                required
-                            />
-                            <label
-                                htmlFor="floating_repeat_text"
-                                className="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
-                            >
-                                Team
-                            </label>
-                        </div>
-                        <div className="mb-5">
+            <Modal isOpen={isOpen} onOpenChange={onClose}>
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader className="flex flex-col gap-1">Modal Title</ModalHeader>
+                            <ModalBody>
+                                <Select
+                                    placeholder="Select a User"
+                                    onChange={(e) => handleUserChange(e.target.value)}
+                                    className="w-full"
+                                    aria-label="to select a user"
+                                >
+                                    {userList.map((user) => (
+                                        <SelectItem key={user.id} value={user.id}>
+                                            {user.name}
+                                        </SelectItem>
+                                    ))}
+                                </Select>
+                                <Input
+                                    type="email"
+                                    label="Email Address"
+                                    value={selectedUser?.email || ""}
+                                    className="mb-5"
+                                    disabled
+                                />
+                                <Input
+                                    type="text"
+                                    label="Role"
+                                    name="role"
+                                    value={selectedUser?.role || ""}
+                                    className="mb-5"
+                                    onChange={(e) => handleValueChange(e)}
+                                    required
+                                />
+                                <Input
+                                    type="text"
+                                    label="Team"
+                                    name="team"
+                                    value={selectedUser?.team || ""}
+                                    className="mb-5"
+                                    onChange={(e) => handleValueChange(e)}
+                                    required
+                                />
+                                <div className="mb-5">
                             {/* Onboarding Status Section */}
                             <div className="relative z-0 w-full mb-5">
                                 <RadioGroup
@@ -222,15 +185,15 @@ export default function ResourceInfo() {
                                     checked={selectedUser?.isCompleted || false}
                                     onChange={handleToggleChange}
                                 />
-                                {!isOpen && !selectedUser?.isCompleted && (
-                                    <Button className="ml-4" auto onPress={onOpen}>
+                                {!isOpen2 && !selectedUser?.isCompleted && (
+                                    <Button className="ml-4" auto onPress={onOpen2}>
                                         Assign Intial Setup
                                     </Button>
                                 )}
 
                                 <Modal
-                                    isOpen={isOpen}
-                                    onOpenChange={onOpenChange}
+                                    isOpen={isOpen2}
+                                    onOpenChange={onClose2}
                                     placement="top-center"
                                 >
                                     <ModalContent>
@@ -256,7 +219,7 @@ export default function ResourceInfo() {
                                                         Close
                                                     </Button>
                                                     <Button color="primary" onPress={onClose}>
-                                                        Sign in
+                                                        Assign
                                                     </Button>
                                                 </ModalFooter>
                                             </>
@@ -265,15 +228,19 @@ export default function ResourceInfo() {
                                 </Modal>
                             </div>
                         </div>
-                        <Button type="submit" color="primary" className="w-full">
-                            Submit
-                        </Button>
-                    </form>
-                </CardBody>
-                <CardFooter className="gap-3">
-                    {/* Add any buttons or actions here */}
-                </CardFooter>
-            </Card>
+                            </ModalBody>
+                            <ModalFooter>
+                                <Button color="danger" variant="light" onPress={onClose}>
+                                    Close
+                                </Button>
+                                <Button color="primary" onPress={handleSubmit}>
+                                    Onboard
+                                </Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
         </>
     );
 }

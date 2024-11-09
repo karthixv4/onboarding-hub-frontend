@@ -4,12 +4,13 @@ import { userState, responseState } from "../recoil/atom/atoms";
 import { registerUser } from "../services/api"; // Assuming this is your registration function
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
-import { roleAtom } from "../recoil/atom/user/userAtoms";
+import { loggedInUser, roleAtom } from "../recoil/atom/user/userAtoms";
 export default function Register({setIsAuthenticated}) {
   const [user, setUser] = useRecoilState(userState);
   const [response, setResponse] = useRecoilState(responseState);
   const navigate = useNavigate();
-  const setRole = useSetRecoilState(roleAtom)
+  const setRole = useSetRecoilState(roleAtom);
+  const setLoggedInUser = useSetRecoilState(loggedInUser)
   // Update the user state when input changes
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -24,13 +25,18 @@ export default function Register({setIsAuthenticated}) {
      
       setResponse(res); // Store the API response
       if (res?.user) {
-        setRole(res.role)
+        // setRole(res.role)
         Cookies.remove("todoToken");
         Cookies.set("todoToken", res.token, {
           path: '/', // Available in all paths
-          sameSite: 'None', // Required for cross-origin
+          sameSite: 'Lax', // Required for cross-origin
           secure: false // Send cookie only over HTTPS
       });
+      setLoggedInUser({
+        id: res?.user?.id,
+        role: res?.role,
+        name: res?.user?.name
+      })
         setIsAuthenticated(true);
 
         if(res?.role == 'manager'){

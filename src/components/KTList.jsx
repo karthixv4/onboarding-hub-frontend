@@ -10,13 +10,14 @@ import {
 } from "@nextui-org/react";
 import SingleKT from "./SingleKT";
 import { useRecoilState, useRecoilValue } from "recoil";
-import { ktDataAtom, fetchKTDataSelector, selectedKTAtom} from "../recoil/atom/user/userAtoms" // Update the path as necessary
+import { ktDataAtom, fetchKTDataSelector, selectedKTAtom } from "../recoil/atom/user/userAtoms"; // Update the path as necessary
 
 export default function KTList({ userId }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [ktData, setKtData] = useRecoilState(ktDataAtom); // Use the atom for KT data
   const fetchedKTs = useRecoilValue(fetchKTDataSelector); // Use the selector to fetch KT data
   const [selectedKT, setSelectedKT] = useRecoilState(selectedKTAtom);
+
   useEffect(() => {
     // Set the fetched data into the atom
     setKtData(fetchedKTs);
@@ -29,28 +30,32 @@ export default function KTList({ userId }) {
 
   return (
     <div className="flex flex-col gap-3 mx-40 my-10">
-      <h1 className="text-2xl font-semibold">My KT Plans</h1> 
-      <Table
-        color="primary"
-        selectionMode="single"
-        aria-label="Example static collection table"
-        className="dark text-foreground bg-background"
-      >
-        <TableHeader>
-          <TableColumn>KT Name</TableColumn>
-          <TableColumn>KT Description</TableColumn>
-          <TableColumn>Status</TableColumn>
-        </TableHeader>
-        <TableBody>
-          {ktData.map((kt) => (
-            <TableRow key={kt.id} onClick={() => handleRowClick(kt)}>
-              <TableCell>{kt.name}</TableCell>
-              <TableCell>{kt.description}</TableCell>
-              <TableCell>{kt.progress}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <h1 className="text-2xl font-semibold">My KT Plans</h1>
+      {ktData && ktData.length > 0 ? (
+        <Table
+          color="primary"
+          selectionMode="single"
+          aria-label="KT Plans Table"
+          className="dark text-foreground bg-background"
+        >
+          <TableHeader>
+            <TableColumn>KT Name</TableColumn>
+            <TableColumn>KT Description</TableColumn>
+            <TableColumn>Status</TableColumn>
+          </TableHeader>
+          <TableBody>
+            {ktData.map((kt) => (
+              <TableRow key={kt.id} onClick={() => handleRowClick(kt)}>
+                <TableCell>{kt.name}</TableCell>
+                <TableCell>{kt.description}</TableCell>
+                <TableCell>{kt.progress}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      ) : (
+        <p>No KT plans assigned.</p>
+      )}
       <SingleKT isOpen={isOpen} onClose={onClose} kt={selectedKT} /> {/* Pass selected data to SingleKT */}
     </div>
   );

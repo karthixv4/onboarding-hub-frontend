@@ -2,9 +2,13 @@ import React, { useState, useRef } from 'react';
 import KTList from './KTList';
 import ActionItemsListUser from './ActionItemsListUser';
 import InitialSetupListUser from './InitialSetupListUser';
+import { useRecoilValue } from 'recoil';
+import { loggedInUser } from '../recoil/atom/user/userAtoms';
 
 const UserDashboard = () => {
     const userId = 30;
+    const user = useRecoilValue(loggedInUser);
+    console.log("User details: ", user);
     const [activeTab, setActiveTab] = useState('about'); // State for managing active tab
 
     // Create refs for each section
@@ -50,9 +54,9 @@ const UserDashboard = () => {
                 </div>
             </section>
             {/* Assign refs to the respective components */}
-            <div ref={ktListRef}><KTList userId={userId} /></div>
-            <div ref={actionItemsRef}><ActionItemsListUser userId={userId} /></div>
-            <div ref={initialSetupRef}><InitialSetupListUser userId={userId} /></div>
+            <div ref={ktListRef}><KTList userId={user?.id} /></div>
+            <div ref={actionItemsRef}><ActionItemsListUser userId={user?.id} /></div>
+            <div ref={initialSetupRef}><InitialSetupListUser userId={user?.id} /></div>
         </>
     );
 };

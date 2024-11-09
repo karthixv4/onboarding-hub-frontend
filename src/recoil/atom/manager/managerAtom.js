@@ -10,6 +10,7 @@ export const allItemsState = atom({
     get: async () => {
       try {
         const data = await fetchAllResourcesWithKT();
+        console.log("DATA: ", data);
         return data;
       } catch (error) {
         console.error("Error fetching resources:", error);

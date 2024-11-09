@@ -12,15 +12,19 @@ export const ktDataAtom = atom({
 export const fetchKTDataSelector = selector({
     key: 'fetchKTData',
     get: async ({ get }) => {
-        const userId = 30; // You may want to create an atom for userId as well
+        const user = get(loggedInUser);
+        const userId = user.id;
+        if (!userId) return null; // Return null if no userId is set
+
         const response = await FetchKTbyResourceId(userId);
-        return response; // Return the fetched data
+        return response;
     },
 });
 
+
 export const selectedKTAtom = atom({
     key: 'selectedKTAtom',
-    default: null, // Default value for selected KT
+    default: null, 
 });
 
 export const initialSetups = atom({
@@ -31,7 +35,9 @@ export const initialSetups = atom({
 export const fetchInitialSetupSelector = selector({
     key: 'fetchinitialSetupSelector',
     get: async ({ get }) => {
-        const userId = 30;
+        const user = get(loggedInUser);
+        const userId = user.id;
+        if (!userId) return null;
         const response = await getInitialSetupsByUser(userId);
         return response; 
     },
@@ -46,7 +52,9 @@ export const actionItems = selector({
     key: 'actionItems',
     get: ({get}) =>{
         const KTs = get(ktDataAtom);
-        const allActionItems = KTs.flatMap(kt => kt.actionItems);
+        if (Object.keys(KTs).length === 0) return null;
+        console.log("KTD: ", KTs);
+        const allActionItems = KTs?.flatMap(kt => kt.actionItems);
         return allActionItems
     }
 })
@@ -62,4 +70,9 @@ export const roleAtom = atom({
         id: 0,
         role: ''
     }
+})
+
+export const loggedInUser = atom({
+    key: 'loggedInUser',
+    default:{}
 })

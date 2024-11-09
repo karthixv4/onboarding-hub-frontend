@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import NavBar from './components/NavBar';
 import ResouceInfo from './components/ResourceInfo';
@@ -12,20 +11,25 @@ import MResTable from './components/MResTable';
 import Register from './components/Register';
 import Cookies from 'js-cookie';
 import { useRecoilState, useRecoilValue } from 'recoil';
-import { isAuth, roleAtom } from './recoil/atom/user/userAtoms';
+import { isAuth, loggedInUser, roleAtom } from './recoil/atom/user/userAtoms';
+import PrivateRoute from './components/PrivateRoute';
+import { useEffect } from 'react';
+import NotFound from './components/NotFound';
+import OnboardUser from './components/OnboardUser';
 
 function App() {
-    const [isAuthenticated, setIsAuthenticated] = useRecoilState(isAuth)
+    const [isAuthenticated, setIsAuthenticated] = useRecoilState(isAuth);
+    const currentUser = useRecoilValue(loggedInUser);
     const navigate = useNavigate();
-const role = useRecoilValue(roleAtom)
     async function verifyJWT() {
         const token = Cookies.get("todoToken");
         if (!token) {
-          console.log("Not authorized");
+            console.log("Not authorized");
+            
             setIsAuthenticated(false);
-            navigate("/login");
+            navigate('/login');
         } else {
-          console.log(" authorized");
+            console.log("authorized");
             // Optionally, verify token validity with backend here
             setIsAuthenticated(true);
         }
@@ -37,29 +41,75 @@ const role = useRecoilValue(roleAtom)
 
     return (
         <>
-            <NavBar />
-            <Routes>
-                {/* Public Routes */}
-                <Route path="/login" element={<Login  setIsAuthenticated={setIsAuthenticated}/>} />
-                <Route path="/register" element={<Register setIsAuthenticated={setIsAuthenticated} />} />
+        <NavBar />
+        <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
+            <Route path="/register" element={<Register setIsAuthenticated={setIsAuthenticated} />} />
+            <Route path="/unauthorized" element={<NotFound />} />
+            <Route path="*" element={<Login />} />
 
-                {/* Protected Routes */}
-                {true ? (
-                    <>
-                        <Route path="/dashboard" element={<ManagerDash />} />
-                        <Route path="/all/resources" element={<MResTable />} />
-                        <Route path="/onboard/new" element={<ResouceInfo />} />
-                        <Route path="/ud" element={<UserDashboard />} />
-                        <Route path="/aa" element={<Sample />} />
-                        <Route path="/init" element={<InitialSetup />} />
-                        <Route path="/mtable" element={<MResTable />} />
-                    </>
-                ) : (
-                    // Redirect to login if not authenticated
-                    <Route path="*" element={<Login />} />
-                )}
-            </Routes>
-        </>
+            {/* Protected Routes for Manager */}
+            <Route
+                path="/dashboard"
+                element={
+                    <PrivateRoute requiredRole="manager">
+                        <ManagerDash />
+                    </PrivateRoute>
+                }
+            />
+            <Route
+                path="/all/resources"
+                element={
+                    <PrivateRoute requiredRole="manager">
+                        <MResTable />
+                    </PrivateRoute>
+                }
+            />
+            <Route
+                path="/onboard/new"
+                element={
+                    <PrivateRoute requiredRole="manager">
+                        <OnboardUser />
+                    </PrivateRoute>
+                }
+            />
+            <Route
+                path="/aa"
+                element={
+                    <PrivateRoute requiredRole="manager">
+                        <Sample />
+                    </PrivateRoute>
+                }
+            />
+            <Route
+                path="/init"
+                element={
+                    <PrivateRoute requiredRole="manager">
+                        <InitialSetup />
+                    </PrivateRoute>
+                }
+            />
+            <Route
+                path="/mtable"
+                element={
+                    <PrivateRoute requiredRole="manager">
+                        <MResTable />
+                    </PrivateRoute>
+                }
+            />
+
+            {/* Protected Routes for Resource */}
+            <Route
+                path="/ud"
+                element={
+                    <PrivateRoute requiredRole="resource">
+                        <UserDashboard />
+                    </PrivateRoute>
+                }
+            />
+        </Routes>
+    </>
     );
 }
 

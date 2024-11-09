@@ -143,17 +143,38 @@ export const UpdateInitialTasks = async (number, data) => {
 export const FetchKTbyResourceId = async (number) => {
   try {
     const response = await withDelay(() => axios.get(`http://localhost:5000/api/kt/resource/${number}`, { withCredentials: true }));
-    return response.data; // Return the response data
+    return response.data; // Return the response data if successful
   } catch (error) {
-    throw new Error(error.response.data.message || 'Fetching KT by resource ID failed'); // Handle errors
+    if (error.response && error.response.status === 404) {
+      return {}; // Return an empty object if 404 error
+      // Alternatively, return [] if you expect an array
+    }
+    throw new Error(error.response?.data?.message || 'Fetching KT by resource ID failed'); // Handle other errors
   }
 };
+
 
 export const getInitialSetupsByUser = async (number) => {
   try {
     const response = await withDelay(() => axios.get(`http://localhost:5000/api/initialSetup/resource/${number}`, { withCredentials: true }));
     return response.data; // Return the response data
   } catch (error) {
+    if (error.response && error.response.status === 404) {
+      return {}; // Return an empty object if 404 error
+      // Alternatively, return [] if you expect an array
+    }
     throw new Error(error.response.data.message || 'Fetching initial setups by user failed'); // Handle errors
+  }
+};
+
+export const FetchAllKtPlan = async () => {
+  try {
+    const response = await withDelay(() => axios.get(`http://localhost:5000/api/kt/`, { withCredentials: true }));
+    return response.data; // Return the response data if successful
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      return {};
+    }
+    throw new Error(error.response?.data?.message || 'Fetching KT by resource ID failed'); // Handle other errors
   }
 };

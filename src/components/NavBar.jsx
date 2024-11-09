@@ -10,13 +10,18 @@ import {
   Link,
   Button,
 } from "@nextui-org/react";
-import { useRecoilState } from "recoil";
-import { isAuth } from "../recoil/atom/user/userAtoms";
+import { useRecoilState, useRecoilValue, useResetRecoilState } from "recoil";
+import { isAuth, loggedInUser } from "../recoil/atom/user/userAtoms";
 import Cookies from 'js-cookie'; // Make sure to import Cookies
+import { useNavigate } from "react-router-dom";
 
 export default function NavBar() {
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useRecoilState(isAuth);
+
+  const isAuthenticated = useRecoilValue(isAuth);
+  const resetIsAuth = useResetRecoilState(isAuth); 
+  const resetSessionUser = useResetRecoilState(loggedInUser); 
   const menuItems = [
     "Profile",
     "Dashboard",
@@ -31,8 +36,14 @@ export default function NavBar() {
 
   // Log out function
   const handleLogout = () => {
-    Cookies.remove("todoToken"); // Remove the authentication token
-    setIsAuthenticated(false); // Update authentication state
+    Cookies.remove("todoToken"); // Remove the auth token
+    resetIsAuth(); // Reset authentication state
+    resetSessionUser();
+    navigate('/login');
+  };
+
+  const handleClick = () => {
+    navigate('/dashboard');
   };
 
   return (
@@ -50,13 +61,14 @@ export default function NavBar() {
 
       <NavbarContent className="hidden sm:flex gap-4" justify="center">
         <NavbarItem>
-          <Link color="foreground" href="/mtable">
-            Features
+          <Link color="foreground" onClick={handleClick} variant="flat"
+        css={{ cursor: 'pointer' }}>
+            Dashboard
           </Link>
         </NavbarItem>
         <NavbarItem isActive>
           <Link href="/dashboard" aria-current="page">
-            Customers
+            About us
           </Link>
         </NavbarItem>
         <NavbarItem>

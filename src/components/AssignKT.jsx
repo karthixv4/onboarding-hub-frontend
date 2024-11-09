@@ -4,7 +4,7 @@ import {
     RadioGroup, Radio, DateRangePicker, Select, SelectItem,
     Input
 } from "@nextui-org/react";
-import { useRecoilState } from 'recoil';
+import { useRecoilState, useResetRecoilState } from 'recoil';
 import { KTDataAtom } from "../recoil/atom/atoms";
 import { createKTPlan, fetchAllResources } from "../services/api";
 import { allItemsState } from "../recoil/atom/manager/managerAtom";
@@ -14,7 +14,14 @@ export default function AssignKT({ isOpen, onClose, dataObject }) {
     useEffect(() => {
         console.log("All Items Updated: ", allItems);
     }, [allItems]);
+    
     const [formData, setFormData] = useRecoilState(KTDataAtom);
+    const resetForm = useResetRecoilState(KTDataAtom);
+    useEffect(()=>{
+        return()=>{
+            resetForm();
+        }
+    },[])
     const [resources, setResources] = useState({});
 
     useEffect(() => {
@@ -203,19 +210,3 @@ export default function AssignKT({ isOpen, onClose, dataObject }) {
         </Modal>
     );
 }
-
-export const animals = [
-    { key: "cat", label: "Cat" },
-    { key: "dog", label: "Dog" },
-    { key: "elephant", label: "Elephant" },
-    { key: "lion", label: "Lion" },
-    { key: "tiger", label: "Tiger" },
-    { key: "giraffe", label: "Giraffe" },
-    { key: "dolphin", label: "Dolphin" },
-    { key: "penguin", label: "Penguin" },
-    { key: "zebra", label: "Zebra" },
-    { key: "shark", label: "Shark" },
-    { key: "whale", label: "Whale" },
-    { key: "otter", label: "Otter" },
-    { key: "crocodile", label: "Crocodile" },
-];

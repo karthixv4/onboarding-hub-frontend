@@ -1,79 +1,158 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDisclosure } from "@nextui-org/react";
 import AssignKT from './AssignKT';
 import AssignActionItem from './AssignActionItem';
-
-const MCard = ({ title, description, onClick }) => {
-    return (
-        <div className="w-full sm:w-1/2 md:w-1/3 p-4">
-            <div className="max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{title}</h5>
-                <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">{description}</p>
-                <a 
-                    onClick={onClick}
-                    href="#" 
-                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                >
-                    Read more
-                    <svg 
-                        className="rtl:rotate-180 w-3.5 h-3.5 ml-2" 
-                        aria-hidden="true" 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        fill="none" 
-                        viewBox="0 0 14 10"
-                    >
-                        <path 
-                            stroke="currentColor" 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round" 
-                            strokeWidth="2" 
-                            d="M1 5h12m0 0L9 1m4 4L9 9"
-                        />
-                    </svg>
-                </a>
-            </div>
-        </div>
-    );
-};
+import ProgressPieChart from './charts/TrackerChart';
+import OnboardingTracker from './charts/OnboardingTracker';
+import { fetchAllResourcesWithKT } from '../services/api';
+import { useSetRecoilState } from 'recoil';
+import { allItemsState } from '../recoil/atom/manager/managerAtom';
+import OnboardUser from './OnboardUser';
 
 const HomePage = () => {
     const navigate = useNavigate();
+    const setAllItems = useSetRecoilState(allItemsState)
+    useEffect(() => {
+        const fetchData = async () => {
+          const data = await fetchAllResourcesWithKT();
+          setAllItems(data);
+        };
+        fetchData();
+      }, []);
+    const handleCardClick = (url) => {
+      navigate(url);
+    };
     const { isOpen, onOpen, onClose } = useDisclosure();
     const { isOpen: isOpen2, onOpen: onOpen2, onClose: onClose2 } = useDisclosure();
-    const handleCardClick = (title) => {
-        if (title === "All resources") {
-            navigate("/all/resources");
-        } else if (title === "Onboard an User") {
-            navigate("/onboard/new");
-        } else if (title === "Assign KT") {
-            onOpen(); // Open the AssignKT modal if the card title is "Assign KT"
-        }else if (title === "Assign Action Item") {
-            onOpen2(); 
-        }
-        // Add more conditions for other cards as needed
-    };
-
-    const cardsData = [
-        { title: "All resources", description: "Here are the biggest enterprise technology acquisitions of 2021 so far." },
-        { title: "Onboard an User", description: "Do all the onboarding formalities" },
-        { title: "Assign KT", description: "Exploring the latest trends in technology and innovation." },
-        { title: "Assign Action Item", description: "Understanding the implications of artificial intelligence in our daily lives." },
-    ];
-
+    const { isOpen: isOpen3, onOpen: onOpen3, onClose: onClose3 } = useDisclosure();
     return (
-        <div className="flex flex-wrap justify-center p-6 gap-4">
-            {cardsData.map((card, index) => (
-                <MCard 
-                    key={index} 
-                    title={card.title} 
-                    description={card.description}  
-                    onClick={() => handleCardClick(card.title)} 
-                />
-            ))}
-            <AssignKT isOpen={isOpen} onClose={onClose} dataObject={{fromTable: false, item: null}} />
-            <AssignActionItem isOpen={isOpen2} onClose={onClose2} dataObject={{fromTable: false, item: null}} />
-        </div>
+        <>
+            <div className="flex justify-center w-full">
+                <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-7xl w-full">
+                    {/* Grid */}
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                        {/* Card - Total Users */}
+                        <div
+                            onClick={() => handleCardClick('/all/resources')}
+                            className="flex flex-col bg-white border shadow-sm rounded-xl dark:bg-neutral-800 dark:border-neutral-700 transform transition-transform duration-200 hover:scale-105 cursor-pointer"
+                        >
+                            <div className="p-4 md:p-5">
+                                <div className="flex items-center gap-x-2">
+                                    <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-neutral-500">
+                                        Resource List
+                                    </p>
+                                </div>
+                                <div className="mt-1 flex items-center gap-x-2">
+                                    <h3 className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-neutral-200">
+                                        All Resources
+                                    </h3>
+                                </div>
+                            </div>
+                        </div>
+                        {/* End Card */}
+
+                        {/* Card - Onboard */}
+                        <div
+                            onClick={() => onOpen3()}
+                            className="flex flex-col bg-white border shadow-sm rounded-xl dark:bg-neutral-800 dark:border-neutral-700 transform transition-transform duration-200 hover:scale-105 cursor-pointer"
+                        >
+                            <div className="p-4 md:p-5">
+                                <div className="flex items-center gap-x-2">
+                                    <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-neutral-500">
+                                        Onboard
+                                    </p>
+                                </div>
+                                <div className="mt-1 flex items-center gap-x-2">
+                                    <h3 className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-neutral-200">
+                                        Onboard a User
+                                    </h3>
+                                </div>
+                            </div>
+                        </div>
+                        {/* End Card */}
+
+                        {/* Card - KT Plan */}
+                        <div
+                            onClick={() => onOpen()}
+                            className="flex flex-col bg-white border shadow-sm rounded-xl dark:bg-neutral-800 dark:border-neutral-700 transform transition-transform duration-200 hover:scale-105 cursor-pointer"
+                        >
+                            <div className="p-4 md:p-5">
+                                <div className="flex items-center gap-x-2">
+                                    <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-neutral-500">
+                                        Quick Assign
+                                    </p>
+                                </div>
+                                <div className="mt-1 flex items-center gap-x-2">
+                                    <h3 className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-neutral-200">
+                                        Assign KT Plan
+                                    </h3>
+                                </div>
+                            </div>
+                        </div>
+                        {/* End Card */}
+
+                        {/* Card - Action Items */}
+                        <div
+                            onClick={() => onOpen2()}
+                            className="flex flex-col bg-white border shadow-sm rounded-xl dark:bg-neutral-800 dark:border-neutral-700 transform transition-transform duration-200 hover:scale-105 cursor-pointer"
+                        >
+                            <div className="p-4 md:p-5">
+                                <div className="flex items-center gap-x-2">
+                                    <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-neutral-500">
+                                        Quick Assign
+                                    </p>
+                                </div>
+                                <div className="mt-1 flex items-center gap-x-2">
+                                    <h3 className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-neutral-200">
+                                        Assign a Task
+                                    </h3>
+                                </div>
+                            </div>
+                        </div>
+                        {/* End Card */}
+
+                        {/* Card - Progress Pie Chart (Double height) */}
+                        <div className="flex flex-col bg-white border shadow-sm rounded-xl dark:bg-neutral-800 dark:border-neutral-700 row-span-2 col-span-2 p-4 md:p-5">
+                            <div className="flex items-center gap-x-2">
+                                <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-neutral-500">
+                                    Overall 
+                                </p>
+                            </div>
+                            <div className="mt-1 flex items-center gap-x-2">
+                                <h3 className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-neutral-200">
+                                    KT Plan Status
+                                </h3>
+                            </div>
+                            <div className="mt-6">
+                                <ProgressPieChart />
+                            </div>
+                        </div>
+                        {/* Card - Onboarding Pie Chart (Double height) */}
+                        <div className="flex flex-col bg-white border shadow-sm rounded-xl dark:bg-neutral-800 dark:border-neutral-700 row-span-2 col-span-2 p-4 md:p-5">
+                            <div className="flex items-center gap-x-2">
+                                <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-neutral-500">
+                                    Overall 
+                                </p>
+                            </div>
+                            <div className="mt-1 flex items-center gap-x-2">
+                                <h3 className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-neutral-200">
+                                    Onboarding Status
+                                </h3>
+                            </div>
+                            <div className="mt-6">
+                                <OnboardingTracker />
+                            </div>
+                        </div>
+                        {/* End Card */}
+                    </div>
+                    {/* End Grid */}
+                </div>
+            </div>
+            <OnboardUser isOpen={isOpen3} onClose={onClose3} />
+            <AssignKT isOpen={isOpen} onClose={onClose} dataObject={{ fromTable: false, item: null }} />
+            <AssignActionItem isOpen={isOpen2} onClose={onClose2} dataObject={{ fromTable: false, item: null }} />
+        </>
     );
 };
 
