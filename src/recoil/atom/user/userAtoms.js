@@ -52,7 +52,7 @@ export const actionItems = selector({
     key: 'actionItems',
     get: ({get}) =>{
         const KTs = get(ktDataAtom);
-        if (Object.keys(KTs).length === 0) return null;
+        if (KTs && Object.keys(KTs).length === 0) return null;
         console.log("KTD: ", KTs);
         const allActionItems = KTs?.flatMap(kt => kt.actionItems);
         return allActionItems

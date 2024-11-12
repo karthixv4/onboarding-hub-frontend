@@ -85,3 +85,8 @@ export const initialSetupTasksAtom = atom({
       return resource || null; // Return the found resource or null if not found
     },
   });
+
+  export const selectedResourceToCreateKT = atom({
+    key: 'selectedResourceToCreateKT',
+    default: [],
+  });

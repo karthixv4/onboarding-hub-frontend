@@ -1,14 +1,18 @@
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, Select, SelectItem, RadioGroup, Radio, Switch, CheckboxGroup, Checkbox, Input } from "@nextui-org/react";
-import { useRecoilState, useResetRecoilState } from "recoil";
+import { useRecoilState, useResetRecoilState, useSetRecoilState } from "recoil";
 import { selectedUserState, userListState } from "../recoil/atom/atoms";
-import { useEffect } from "react";
-import { AssignInitialTasks, fetchAllUsers, onBoardUser } from "../services/api";
+import { useEffect, useState } from "react";
+import { AssignInitialTasks, fetchAllResourcesWithKT, fetchAllUsers, onBoardUser } from "../services/api";
+import { allItemsState } from "../recoil/atom/manager/managerAtom";
+import Loader from "./loader/Loader";
 
 export default function OnboardUser({ isOpen, onClose }) {
+    const [loading, setLoading] = useState(false);
     const [userList, setUserList] = useRecoilState(userListState);
     const [selectedUser, setSelectedUser] = useRecoilState(selectedUserState);
     const resetSelectedUser = useResetRecoilState(selectedUserState);
-     const { isOpen: isOpen2, onOpen:onOpen2, onClose:onClose2 } = useDisclosure();
+    const setAllItems = useSetRecoilState(allItemsState);
+    const { isOpen: isOpen2, onOpen: onOpen2, onClose: onClose2 } = useDisclosure();
     useEffect(() => {
         async function getAllUsers() {
             const users = await fetchAllUsers();
@@ -83,6 +87,7 @@ export default function OnboardUser({ isOpen, onClose }) {
                     resourceId: resourceId
                 }
                 const response = await AssignInitialTasks(payload);
+                return response;
 
             } catch (error) {
                 console.error("Error sending initial tasks:", error);
@@ -94,7 +99,8 @@ export default function OnboardUser({ isOpen, onClose }) {
 
     // Handle form submission
     const handleSubmit = async (event) => {
-        onClose();
+        setLoading(true);
+
         const userData = {
             userId: selectedUser?.email,
             onboardingStatus: selectedUser?.status,
@@ -108,11 +114,15 @@ export default function OnboardUser({ isOpen, onClose }) {
             const response = await onBoardUser(userData); // Make the POST call
             if (response) {
                 await sendInitialTasks(response.id);
-                navigate("/dashboard");
+                const data = await fetchAllResourcesWithKT();
+                setAllItems(data);
             }
 
         } catch (error) {
             console.error("Error submitting user data:", error);
+        } finally {
+            setLoading(false);
+            onClose();
         }
     };
     const selectedIds = selectedUser?.initialSetup?.map((step) => step.id) || [];
@@ -122,48 +132,50 @@ export default function OnboardUser({ isOpen, onClose }) {
         <>
             <Modal isOpen={isOpen} onOpenChange={onClose}>
                 <ModalContent>
-                    {(onClose) => (
-                        <>
-                            <ModalHeader className="flex flex-col gap-1">Modal Title</ModalHeader>
-                            <ModalBody>
-                                <Select
-                                    placeholder="Select a User"
-                                    onChange={(e) => handleUserChange(e.target.value)}
-                                    className="w-full"
-                                    aria-label="to select a user"
-                                >
-                                    {userList.map((user) => (
-                                        <SelectItem key={user.id} value={user.id}>
-                                            {user.name}
-                                        </SelectItem>
-                                    ))}
-                                </Select>
-                                <Input
-                                    type="email"
-                                    label="Email Address"
-                                    value={selectedUser?.email || ""}
-                                    className="mb-5"
-                                    disabled
-                                />
-                                <Input
-                                    type="text"
-                                    label="Role"
-                                    name="role"
-                                    value={selectedUser?.role || ""}
-                                    className="mb-5"
-                                    onChange={(e) => handleValueChange(e)}
-                                    required
-                                />
-                                <Input
-                                    type="text"
-                                    label="Team"
-                                    name="team"
-                                    value={selectedUser?.team || ""}
-                                    className="mb-5"
-                                    onChange={(e) => handleValueChange(e)}
-                                    required
-                                />
-                                <div className="mb-5">
+                    {/* Overlay for loading */}
+                    {loading && (
+                        <Loader />
+                    )}
+                    <ModalHeader className="flex flex-col gap-1">Onboard to the Project</ModalHeader>
+                    <ModalBody>
+                        <Select
+                            placeholder="Select a User"
+                            onChange={(e) => handleUserChange(e.target.value)}
+                            className="w-full"
+                            aria-label="to select a user"
+                        >
+                            {userList.map((user) => (
+                                <SelectItem key={user.id} value={user.id}>
+                                    {user.name}
+                                </SelectItem>
+                            ))}
+                        </Select>
+                        <Input
+                            type="email"
+                            label="Email Address"
+                            value={selectedUser?.email || ""}
+                            className="mb-5"
+                            disabled
+                        />
+                        <Input
+                            type="text"
+                            label="Role"
+                            name="role"
+                            value={selectedUser?.role || ""}
+                            className="mb-5"
+                            onChange={(e) => handleValueChange(e)}
+                            required
+                        />
+                        <Input
+                            type="text"
+                            label="Team"
+                            name="team"
+                            value={selectedUser?.team || ""}
+                            className="mb-5"
+                            onChange={(e) => handleValueChange(e)}
+                            required
+                        />
+                        <div className="mb-5">
                             {/* Onboarding Status Section */}
                             <div className="relative z-0 w-full mb-5">
                                 <RadioGroup
@@ -228,17 +240,15 @@ export default function OnboardUser({ isOpen, onClose }) {
                                 </Modal>
                             </div>
                         </div>
-                            </ModalBody>
-                            <ModalFooter>
-                                <Button color="danger" variant="light" onPress={onClose}>
-                                    Close
-                                </Button>
-                                <Button color="primary" onPress={handleSubmit}>
-                                    Onboard
-                                </Button>
-                            </ModalFooter>
-                        </>
-                    )}
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button color="danger" variant="light" onPress={onClose}>
+                            Close
+                        </Button>
+                        <Button color="primary" onPress={handleSubmit}>
+                            Onboard
+                        </Button>
+                    </ModalFooter>
                 </ModalContent>
             </Modal>
         </>

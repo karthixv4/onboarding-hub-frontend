@@ -52,3 +52,8 @@ export const selectedUserState = atom({
   key: "selectedUserState", // Unique ID (with respect to other atoms/selectors)
   default: null, // Default value (initial state)
 });
+
+export const NotificationState = atom({
+  key: "NotificationState",
+  default: null
+})

@@ -2,20 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, Progress, CheckboxGroup, Checkbox } from "@nextui-org/react";
 import AssignKT from './AssignKT';
 import ListOfKTAssigned from './ListOfKTAssigned';
-import { AssignInitialTasks, UpdateInitialTasks } from '../services/api';
+import { AssignInitialTasks, fetchAllResourcesWithKT, UpdateInitialTasks } from '../services/api';
 import { allItemsState, initialSetupTasksAtom, resourceByIdSelector, resourceCompletionPercentageSelector } from '../recoil/atom/manager/managerAtom';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-
+import ListOfInitialSetupsAssigned from './ListOfInitialSetupsAssigned';
+import Loader from './loader/Loader';
 const SingleResourceView = ({ isOpen, onClose, item }) => {
-const resource = useRecoilValue(resourceByIdSelector(item.id));
+  const resource = useRecoilValue(resourceByIdSelector(item.id));
   const [initialSetupTasks, setInitialSetupTasks] = useRecoilState(initialSetupTasksAtom);
-  const setAllItemsState = useSetRecoilState(allItemsState);
-
+  const [loading, setLoading] = useState(false);
   const { ktCompletion, setupCompletion, totalSetupTasks,
-    completedKTPlans,totalKTPlans,
+    completedKTPlans, totalKTPlans,
     completedSetupTasks } = useRecoilValue(resourceCompletionPercentageSelector(item.id));
-
-
+    const setAllItems = useSetRecoilState(allItemsState);
   const { isOpen: isOpen2, onOpen: onOpen2, onClose: onClose2 } = useDisclosure();
   const { isOpen: isOpen3, onOpen: onOpen3, onClose: onClose3 } = useDisclosure();
   const { isOpen: isISOpen, onOpen: onISOpen, onClose: onISClose } = useDisclosure();
@@ -31,7 +30,7 @@ const resource = useRecoilValue(resourceByIdSelector(item.id));
         description: task.description
       })) || []
     );
-    
+
 
   }, [resource, setInitialSetupTasks]);
   // Handle checkbox selection change
@@ -42,7 +41,8 @@ const resource = useRecoilValue(resourceByIdSelector(item.id));
     }));
     setInitialSetupTasks(updatedTasks);
   };
-  const handleAssignITSubmit = async ()=> {
+  const handleAssignITSubmit = async () => {
+    setLoading(true);
     try {
 
       const setupCompleted = initialSetupTasks.length > 0 && initialSetupTasks.every(task => task.completed === true);
@@ -55,61 +55,30 @@ const resource = useRecoilValue(resourceByIdSelector(item.id));
       const response = await AssignInitialTasks(payload);
 
       if (response) {
-        console.log("Initial setup updated successfully");
-      onIS2Close();
+        const data = await fetchAllResourcesWithKT();
+        setAllItems(data);
+
       } else {
         console.error("Failed to update initial setup");
       }
     } catch (error) {
       console.error("Error submitting initial setup:", error);
     } finally {
-      onISClose();
+      setLoading(false);
+      onIS2Close();
     }
   }
-  const handleInitialSetupSubmit = async () => {
-    try {
 
-      const setupCompleted = initialSetupTasks.length > 0 && initialSetupTasks.every(task => task.completed === true);
-      const payload = {
-        setupCompleted: setupCompleted,
-        setupTasks: initialSetupTasks
-      }
-
-      const response = await UpdateInitialTasks(resource.initialSetup.id, payload);
-
-      if (response) {
-        setAllItemsState(prevItems =>{
-         const hey =  prevItems.map(prev => 
-            prev.id == response?.resourceId 
-              ? {
-                ...prev,
-                initialSetup : response
-              }
-              : prev
-          ) 
-          return hey
-        }
-        );
-        console.log("Initial setup updated successfully");
-      } else {
-        console.error("Failed to update initial setup");
-      }
-    } catch (error) {
-      console.error("Error submitting initial setup:", error);
-    } finally {
-      onISClose();
-    }
-  };
   const selectedIds = initialSetupTasks?.map((step) => step.id) || [];
 
   const handleISChange = (newValues) => {
-        
+
     const updatedSetup = newValues.map((id) => {
-        const step = initialSetupSteps.find((step) => step.id === id);
-        return step ? { id: step.id, name: step.name, description: step.description, completed: false } : null;
+      const step = initialSetupSteps.find((step) => step.id === id);
+      return step ? { id: step.id, name: step.name, description: step.description, completed: false } : null;
     }).filter(Boolean);
     setInitialSetupTasks(updatedSetup)
-};
+  };
   return (
     <>
       <Modal isOpen={isOpen} onOpenChange={onClose} size='4xl'>
@@ -150,40 +119,9 @@ const resource = useRecoilValue(resourceByIdSelector(item.id));
                           <>
                             <p className="font-normal text-gray-700 dark:text-gray-400">
                               {completedSetupTasks}/{totalSetupTasks} tasks completed
-                           
+
                             </p>
                             <Progress label="Setup completion" size="sm" value={setupCompletion} maxValue={100} color="success" formatOptions={{ style: "percent" }} showValueLabel={true} className="mt-2" />
-                            <Modal isOpen={isISOpen} onOpenChange={onISClose} placement="top-center">
-                              <ModalContent>
-                                {(onISClose) => (
-                                  <>
-                                    <ModalHeader className="flex flex-col gap-1">Assign Initial Setup</ModalHeader>
-                                    <ModalBody>
-                                      <div className="flex flex-col gap-3">
-                                        <CheckboxGroup
-                                          label="Select Activities"
-                                          color="warning"
-                                          value={initialSetupTasks.filter(task => task.completed).map(task => task.id.toString())}
-                                          onChange={handleCheckboxChange}
-                                        >
-                                          {resource?.initialSetup?.setupTasks?.map((step) => (
-                                            <Checkbox value={step.id.toString()} key={step.id}>{step.name}</Checkbox>
-                                          ))}
-                                        </CheckboxGroup>
-                                      </div>
-                                    </ModalBody>
-                                    <ModalFooter>
-                                      <Button color="danger" variant="flat" onPress={onISClose}>
-                                        Close
-                                      </Button>
-                                      <Button color="primary" onPress={handleInitialSetupSubmit}>
-                                        Update
-                                      </Button>
-                                    </ModalFooter>
-                                  </>
-                                )}
-                              </ModalContent>
-                            </Modal>
                           </>
                         ) : (
                           <>
@@ -192,40 +130,41 @@ const resource = useRecoilValue(resourceByIdSelector(item.id));
                               Assign Intial Setup
                             </Button>
                             <Modal
-                                    isOpen={isIS2Open}
-                                    onOpenChange={onIS2Close}
-                                    placement="top-center"
-                                >
-                                    <ModalContent>
-                                        {(onIS2Close) => (
-                                            <>
-                                                <ModalHeader className="flex flex-col gap-1">Assign Initial Setup</ModalHeader>
-                                                <ModalBody>
-                                                    <div className="flex flex-col gap-3">
-                                                        <CheckboxGroup
-                                                            label="Select Activities"
-                                                            color="warning"
-                                                            value={selectedIds} // Pass only the IDs of selected items
-                                                            onValueChange={handleISChange}
-                                                        >
-                                                            {initialSetupSteps.map((step) => (
-                                                                <Checkbox value={step.id} key={step.id}>{step.name}</Checkbox>
-                                                            ))}
-                                                        </CheckboxGroup>
-                                                    </div>
-                                                </ModalBody>
-                                                <ModalFooter>
-                                                    <Button color="danger" variant="flat" onPress={onIS2Close}>
-                                                        Close
-                                                    </Button>
-                                                    <Button color="primary" onPress={handleAssignITSubmit}>
-                                                        Assign
-                                                    </Button>
-                                                </ModalFooter>
-                                            </>
-                                        )}
-                                    </ModalContent>
-                                </Modal>
+                              isOpen={isIS2Open}
+                              onOpenChange={onIS2Close}
+                              placement="top-center"
+                            >
+                              <ModalContent>
+                                {/* Overlay for loading */}
+                                {loading && (
+                                  <Loader />
+                                )}
+
+                                <ModalHeader className="flex flex-col gap-1">Assign Initial Setup</ModalHeader>
+                                <ModalBody>
+                                  <div className="flex flex-col gap-3">
+                                    <CheckboxGroup
+                                      label="Select Activities"
+                                      color="warning"
+                                      value={selectedIds} // Pass only the IDs of selected items
+                                      onValueChange={handleISChange}
+                                    >
+                                      {initialSetupSteps.map((step) => (
+                                        <Checkbox value={step.id} key={step.id}>{step.name}</Checkbox>
+                                      ))}
+                                    </CheckboxGroup>
+                                  </div>
+                                </ModalBody>
+                                <ModalFooter>
+                                  <Button color="danger" variant="flat" onPress={onIS2Close}>
+                                    Close
+                                  </Button>
+                                  <Button color="primary" onPress={handleAssignITSubmit}>
+                                    Assign
+                                  </Button>
+                                </ModalFooter>
+                              </ModalContent>
+                            </Modal>
                           </>
                         )}
                       </a>
@@ -234,17 +173,16 @@ const resource = useRecoilValue(resourceByIdSelector(item.id));
                 </div>
               </ModalBody>
               <ModalFooter>
-                <Button color="danger" variant="light" onPress={onClose}>
-                  Close
-                </Button>
+
                 <Button color="primary" onPress={onClose}>
-                  Action
+                  Close
                 </Button>
               </ModalFooter>
             </>
           )}
         </ModalContent>
       </Modal>
+      <ListOfInitialSetupsAssigned isOpen={isISOpen} onClose={onISClose} resource={resource} />
       <AssignKT isOpen={isOpen2} onClose={onClose2} dataObject={{ fromTable: true, user: resource }} />
       <ListOfKTAssigned isOpen={isOpen3} onClose={onClose3} KTs={resource?.ktPlans} />
 

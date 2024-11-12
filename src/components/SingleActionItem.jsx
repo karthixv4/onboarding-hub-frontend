@@ -16,6 +16,7 @@ import {
 } from "@nextui-org/react";
 import { updateActionItem } from '../services/api';
 import AssignActionItem from './AssignActionItem';
+import Loader from './loader/Loader';
 const SingleActionItem = ({ isOpen, onClose, item }) => {
 
     const { isOpen: isOpen2, onOpen: onOpen2, onClose: onClose2 } = useDisclosure();
@@ -23,12 +24,13 @@ const SingleActionItem = ({ isOpen, onClose, item }) => {
     const [loading, setLoading] = useState(false);
     const [updatedItems, setUpdatedItems] = useState(item?.actionItems);
 
-    // Handle the status change of the switch for the currently active item
-    const handleStatusChange = (index) => {
-        const newItems = [...updatedItems];
-        newItems[index].completed = !newItems[index].completed; // Toggle the completion status
-        setUpdatedItems(newItems); // Update the state with new values
-    };
+const handleStatusChange = (index) => {
+    const newItems = updatedItems.map((item, idx) => 
+        idx === index ? { ...item, completed: !item.completed } : item
+    );
+    setUpdatedItems(newItems); // Update the state with new values
+};
+
 
     const handleSubmit = async () => {
         setLoading(true);
@@ -57,6 +59,10 @@ const SingleActionItem = ({ isOpen, onClose, item }) => {
     return (
         <Modal isOpen={isOpen} onOpenChange={onClose} size="4xl">
             <ModalContent>
+                {/* Overlay for loading */}
+                {loading && (
+                    <Loader />
+                )}
                 <div className="flex justify-between items-center">
                     <ModalHeader>
                         <h2>Action Items</h2>

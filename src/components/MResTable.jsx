@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useRecoilValue } from "recoil";
 
 import { allItemsState } from "../recoil/atom/manager/managerAtom";
@@ -24,6 +24,7 @@ import {
 import { PlusIcon, SearchIcon, ChevronDownIcon } from "./Icons";
 import SingleResourceView from "./SingleResourceView";
 import { useNavigate } from "react-router-dom";
+import OnboardUser from "./OnboardUser";
 
 const statusColorMap = {
   NOT_STARTED: "warning",
@@ -52,7 +53,7 @@ export default function MResTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [selectedKeys, setSelectedKeys] = useState(new Set());
-  const {isOpen:isOpen2, onOpen:onOpen2, onClose:onClose2} = useDisclosure();
+  const { isOpen: isOpen3, onOpen: onOpen3, onClose: onClose3 } = useDisclosure();
   // Handle filtering
   const filteredItems = useMemo(() => {
     let items = [...allItems];
@@ -114,7 +115,6 @@ export default function MResTable() {
     const startIdx = (currentPage - 1) * rowsPerPage;
     return sortedItems.slice(startIdx, startIdx + rowsPerPage);
   }, [sortedItems, currentPage, rowsPerPage]);
-console.log("allItems: ", allItems);
   // Handle column visibility
   const headerColumns = useMemo(() => {
     return columns.filter(column => visibleColumns.has(column.uid));
@@ -284,7 +284,7 @@ navigate('/onboard/new')
         </Dropdown>
 
         {/* Add New Button */}
-        <Button color="primary" onClick={handleBoardClick} endContent={<PlusIcon />}>
+        <Button color="primary" onPress={onOpen3} endContent={<PlusIcon />}>
           Add New
         </Button>
       </div>
@@ -404,6 +404,8 @@ navigate('/onboard/new')
           item={selectedItem}
         />
       )}
+
+<OnboardUser isOpen={isOpen3} onClose={onClose3} />
     </div>
   );
 }

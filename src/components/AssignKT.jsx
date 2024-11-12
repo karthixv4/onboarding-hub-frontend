@@ -4,25 +4,29 @@ import {
     RadioGroup, Radio, DateRangePicker, Select, SelectItem,
     Input
 } from "@nextui-org/react";
-import { useRecoilState, useResetRecoilState } from 'recoil';
+import { useRecoilState, useRecoilValue, useResetRecoilState } from 'recoil';
 import { KTDataAtom } from "../recoil/atom/atoms";
 import { createKTPlan, fetchAllResources } from "../services/api";
-import { allItemsState } from "../recoil/atom/manager/managerAtom";
+import { allItemsState, selectedResourceToCreateKT } from "../recoil/atom/manager/managerAtom";
+import Loader from "./loader/Loader";
 
 export default function AssignKT({ isOpen, onClose, dataObject }) {
-    const [allItems, setAllItemsState] = useRecoilState(allItemsState)
+
+    const [loading, setLoading] = useState(false);
+    const [allItems, setAllItemsState] = useRecoilState(allItemsState);
+    const [resources, setResources] = useState();
+    const getUser = useRecoilValue(selectedResourceToCreateKT);
     useEffect(() => {
-        console.log("All Items Updated: ", allItems);
-    }, [allItems]);
-    
+        console.log("All Items Updated: ", resources);
+    }, [dataObject?.user]);
+
     const [formData, setFormData] = useRecoilState(KTDataAtom);
     const resetForm = useResetRecoilState(KTDataAtom);
-    useEffect(()=>{
-        return()=>{
+    useEffect(() => {
+        return () => {
             resetForm();
         }
-    },[])
-    const [resources, setResources] = useState({});
+    }, [])
 
     useEffect(() => {
         async function getAllResources() {
@@ -41,6 +45,7 @@ export default function AssignKT({ isOpen, onClose, dataObject }) {
     }, [dataObject]);
 
     const handleSubmit = async () => {
+        setLoading(true);
         const { start, end } = formData.dateRange;
 
         try {
@@ -78,6 +83,8 @@ export default function AssignKT({ isOpen, onClose, dataObject }) {
             onClose();
         } catch (error) {
             console.error("Error submitting form:", error);
+        } finally {
+            setLoading(false)
         }
     };
 
@@ -93,7 +100,7 @@ export default function AssignKT({ isOpen, onClose, dataObject }) {
         if (dataObject.fromTable) {
             setFormData(prev => ({
                 ...prev,
-                assignee: resources.id,
+                assignee: getUser.id,
             }));
         }
         setFormData(prev => ({
@@ -135,77 +142,78 @@ export default function AssignKT({ isOpen, onClose, dataObject }) {
             onOpenChange={onClose}
             placement="top-center"
         >
-            <ModalContent>
-                {() => (
-                    <>
-                        <ModalHeader className="flex flex-col gap-1">Assign KT</ModalHeader>
-                        <ModalBody>
-                            {!dataObject.fromTable ? <Select
-                                onChange={handleAssigneeChange} // Updated for Select
-                                label="Select Assignee"
-                                placeholder="Select an Assignee"
-                                className="max-w"
-                                items={resources}
-                            >
-                                {(resource) => <SelectItem key={resource.id}>{resource.user.name}</SelectItem>}
-                            </Select>
-                                :
-                                <Input
-                                    isDisabled
-                                    type="email"
-                                    label="Email"
-                                    defaultValue={resources?.user?.email}
-                                    className="max-w-xs"
-                                />
-                            }
-                            <Input
 
-                                type="text"
-                                label="Name"
-                                value={formData.name || ''}
-                                placeholder="Name of KT"
-                                onChange={(e) => handleNameChange(e.target.value)}
-                                className="max-w-xs"
-                            />
-                            <Textarea
-                                label="Description"
-                                placeholder="What is this KT about?"
-                                className="max-w"
-                                onChange={(e) => handleDescriptionChange(e.target.value)} // Updated for Textarea
-                            />
-                            <RadioGroup
-                                label="Select Status"
-                                orientation="horizontal"
-                                value={formData.status}
-                                onChange={handleStatusChange} // Updated for RadioGroup
-                            >
-                                <Radio value="NOT_STARTED">Not Started</Radio>
-                                <Radio value="IN_PROGRESS">In Progress</Radio>
-                                <Radio value="COMPLETED">Completed</Radio>
-                            </RadioGroup>
-                            <DateRangePicker
-                                label="Date"
-                                className="max-w"
-                                onChange={handleDateRangeChange} // Updated for DateRangePicker
-                            />
-                            <Textarea
-                                label="Description"
-                                placeholder="Any remarks ?"
-                                className="max-w"
-                                value={formData.remarks || ''}
-                                onChange={(e) => handleRemarksChange(e.target.value)} // Updated for Textarea
-                            />
-                        </ModalBody>
-                        <ModalFooter>
-                            <Button color="danger" variant="flat" onPress={onClose}>
-                                Close
-                            </Button>
-                            <Button color="primary" onPress={handleSubmit}>
-                                Assign
-                            </Button>
-                        </ModalFooter>
-                    </>
+            <ModalContent>
+                {/* Overlay for loading */}
+                {loading && (
+                    <Loader />
                 )}
+                <ModalHeader className="flex flex-col gap-1">Assign KT</ModalHeader>
+                <ModalBody>
+                    {!dataObject.fromTable ? <Select
+                        onChange={handleAssigneeChange} // Updated for Select
+                        label="Select Assignee"
+                        placeholder="Select an Assignee"
+                        className="max-w"
+                        items={resources || []}
+                    >
+                        {(resource) => <SelectItem key={resource.id}>{resource.user.name}</SelectItem>}
+                    </Select>
+                        :
+                        <Input
+                            isDisabled
+                            type="email"
+                            label="Email"
+                            defaultValue={getUser?.user?.email}
+                            className="max-w-xs"
+                        />
+                    }
+                    <Input
+
+                        type="text"
+                        label="Name"
+                        value={formData.name || ''}
+                        placeholder="Name of KT"
+                        onChange={(e) => handleNameChange(e.target.value)}
+                        className="max-w-xs"
+                    />
+                    <Textarea
+                        label="Description"
+                        placeholder="What is this KT about?"
+                        className="max-w"
+                        onChange={(e) => handleDescriptionChange(e.target.value)} // Updated for Textarea
+                    />
+                    <RadioGroup
+                        label="Select Status"
+                        orientation="horizontal"
+                        value={formData.status}
+                        onChange={handleStatusChange} // Updated for RadioGroup
+                    >
+                        <Radio value="NOT_STARTED">Not Started</Radio>
+                        <Radio value="IN_PROGRESS">In Progress</Radio>
+                        <Radio value="COMPLETED">Completed</Radio>
+                    </RadioGroup>
+                    <DateRangePicker
+                        label="Date"
+                        className="max-w"
+                        onChange={handleDateRangeChange} // Updated for DateRangePicker
+                    />
+                    <Textarea
+                        label="Description"
+                        placeholder="Any remarks ?"
+                        className="max-w"
+                        value={formData.remarks || ''}
+                        onChange={(e) => handleRemarksChange(e.target.value)} // Updated for Textarea
+                    />
+                </ModalBody>
+                <ModalFooter>
+                    <Button color="danger" variant="flat" onPress={onClose}>
+                        Close
+                    </Button>
+                    <Button color="primary" onPress={handleSubmit}>
+                        Assign
+                    </Button>
+                </ModalFooter>
             </ModalContent>
         </Modal>
     );

@@ -19,18 +19,21 @@ import {
 import { fetchResourceById, updateKTPlan } from '../services/api';
 import SingleActionItem from './SingleActionItem';
 import AssignKT from './AssignKT';
-import { useRecoilState, useSetRecoilState } from 'recoil';
-import { allItemsState } from '../recoil/atom/manager/managerAtom';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
+import { allItemsState, resourceByIdSelector, selectedResourceToCreateKT } from '../recoil/atom/manager/managerAtom';
+import Loader from './loader/Loader';
 
 const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
-    const [allItems, setAllItemsState] = useRecoilState(allItemsState)
+    console.log("KYS: ", KTs);
+    const [allItems, setAllItemsState] = useRecoilState(allItemsState);
     const [activeTab, setActiveTab] = useState(0);
     const [loading, setLoading] = useState(false);
     const { isOpen: isOpen2, onOpen: onOpen2, onClose: onClose2 } = useDisclosure();
     const { isOpen: isOpen3, onOpen: onOpen3, onClose: onClose3 } = useDisclosure();
     const [localKTItems, setLocalKTItems] = useState(KTs);
     const [resource, setResource] = useState();
-    // const setAllItemsState = useSetRecoilState(allItemsState);
+    // const Thisresource = useRecoilValue(resourceByIdSelector());
+    const [getUser, SetUser] = useRecoilState(selectedResourceToCreateKT);
 
     // Update local state when KTs prop changes
     useEffect(() => {
@@ -43,18 +46,19 @@ const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
         );
         setLocalKTItems(newItems);
     };
-    
+
     const handleRemarksChange = (index, newRemarks) => {
         const newItems = localKTItems.map((item, i) =>
             i === index ? { ...item, remarks: newRemarks, modified: true } : item
         );
         setLocalKTItems(newItems);
     };
+
     const handleSubmit = async () => {
         setLoading(true);
         try {
             const modifiedItems = localKTItems.filter(item => item.modified);
-            const responses = await Promise.all(modifiedItems.map(item => 
+            const responses = await Promise.all(modifiedItems.map(item =>
                 updateKTPlan(item.id, {
                     progress: item.progress,
                     remarks: item.remarks,
@@ -63,23 +67,21 @@ const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
 
             // Check if all updates were successful
             if (responses.every(response => response)) {
-                   setAllItemsState((prevState) =>
+                setAllItemsState((prevState) =>
                     prevState.map((resource) => {
-                        // Only update the resource with the matching ID
                         if (resource.id == responses[0]?.resourceId) {
                             const updatedKTIds = new Set(responses.map((kt) => kt.id));
                             const filteredKTPlans = resource.ktPlans.filter((kt) => !updatedKTIds.has(kt.id));
                             return {
                                 ...resource,
-                                ktPlans: [...filteredKTPlans, ...responses], // Keep existing KTs that aren’t updated, add new updates
+                                ktPlans: [...filteredKTPlans, ...responses],
                             };
                         }
-                        return resource; // Return other resources unchanged
+                        return resource;
                     })
                 );
-                    onClose(); 
-                // Reset modified flags after successful submission
                 setLocalKTItems(prevItems => prevItems.map(item => ({ ...item, modified: false })));
+                onClose();
             } else {
                 console.error("Update failed for some items");
             }
@@ -89,16 +91,13 @@ const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
             setLoading(false);
         }
     };
-    
 
     const handleCreateKTClick = async () => {
         const resourceId = localKTItems.length > 0 ? localKTItems[0].resourceId : null;
         try {
-           
-            const resource = allItems.find(item => item.id == resourceId)
+            const resource = allItems.find(item => item.id == resourceId);
             console.log("resource items: ", resource);
-            const data = await fetchResourceById(resourceId);
-            setResource(data);
+            SetUser(resource);
             onOpen3();
         } catch (error) {
             console.error("Error fetching resource:", error);
@@ -108,6 +107,10 @@ const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
     return (
         <Modal isOpen={isOpen} onOpenChange={onClose} size="4xl">
             <ModalContent>
+                {/* Overlay for loading */}
+                {loading && (
+                    <Loader />
+                )}
                 <div className="flex justify-between items-center">
                     <ModalHeader>
                         <h2>All KTs</h2>
@@ -116,7 +119,7 @@ const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
                         <Button color="primary" onPress={handleCreateKTClick}>
                             Create a KT
                         </Button>
-                        <AssignKT isOpen={isOpen3} onClose={onClose3} dataObject={{ fromTable: true, user: resource }} />
+                        <AssignKT isOpen={isOpen3} onClose={onClose3} dataObject={{ fromTable: true, user: getUser }} />
                     </ModalHeader>
                 </div>
                 <ModalBody>
@@ -149,7 +152,7 @@ const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
                                             orientation="horizontal"
                                             className='pb-5'
                                             value={item.progress}
-                                            onChange={(e) => handleStatusChange(index, e.target.value)} // Update on status change
+                                            onChange={(e) => handleStatusChange(index, e.target.value)}
                                         >
                                             <Radio value="NOT_STARTED">Not Started</Radio>
                                             <Radio value="IN_PROGRESS">In Progress</Radio>
@@ -167,7 +170,7 @@ const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
                                             placeholder="Please add remarks"
                                             className="max-w pb-5"
                                             value={item.remarks}
-                                            onChange={(e) => handleRemarksChange(index, e.target.value)} // Update on remarks change
+                                            onChange={(e) => handleRemarksChange(index, e.target.value)}
                                         />
                                         <SingleActionItem isOpen={isOpen2} onClose={onClose2} item={item} />
                                     </CardBody>
@@ -177,7 +180,7 @@ const ListOfKTAssigned = ({ isOpen, onClose, KTs }) => {
                     </Tabs>
                 </ModalBody>
                 <ModalFooter>
-                    <Button color="danger" variant="flat" onPress={onClose}>
+                    <Button color="danger" variant="flat" onPress={onClose} disabled={loading}>
                         Close
                     </Button>
                     <Button color="primary" onPress={handleSubmit} disabled={loading}>

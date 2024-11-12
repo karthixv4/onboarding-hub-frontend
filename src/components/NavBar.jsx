@@ -66,7 +66,7 @@ export default function NavBar() {
             Dashboard
           </Link>
         </NavbarItem>
-        <NavbarItem isActive>
+        {/* <NavbarItem isActive>
           <Link href="/dashboard" aria-current="page">
             About us
           </Link>
@@ -75,7 +75,7 @@ export default function NavBar() {
           <Link color="foreground" href="/ud">
             Integrations
           </Link>
-        </NavbarItem>
+        </NavbarItem> */}
       </NavbarContent>
 
       <NavbarContent justify="end">

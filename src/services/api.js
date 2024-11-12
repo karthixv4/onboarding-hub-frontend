@@ -159,7 +159,7 @@ export const getInitialSetupsByUser = async (number) => {
     const response = await withDelay(() => axios.get(`http://localhost:5000/api/initialSetup/resource/${number}`, { withCredentials: true }));
     return response.data; // Return the response data
   } catch (error) {
-    if (error.response && error.response.status === 404) {
+    if (error.response && error.response.status === 404 || error.response.status === 500) {
       return {}; // Return an empty object if 404 error
       // Alternatively, return [] if you expect an array
     }
