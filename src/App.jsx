@@ -39,7 +39,7 @@ function App() {
 
     return (
         <>
-            <NavBar />
+            {isAuthenticated && <NavBar />}
             <Routes>
                 {/* Public Routes */}
                 <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
@@ -48,6 +48,7 @@ function App() {
                 <Route path="*" element={<Login />} />
 
                 {/* Manager Routes */}
+                
                 <Route path="/dashboard" element={<ManagerDash />} />
                 <Route path="/all/resources" element={<MResTable />} />
                 <Route path="/onboard/new" element={<OnboardUser />} />

@@ -16,6 +16,7 @@ export default function Login({setIsAuthenticated}) {
     if(sessionUser && sessionUser.id ){
       sessionUser.role == 'manager' ? navigate('/dashboard') : 
       sessionUser.role == 'resource' ? navigate('/ud') : navigate('login');
+      console.log("Step 7 : ", sessionUser);
     }
   },[sessionUser])
   // Update the user state when input changes
@@ -51,9 +52,10 @@ export default function Login({setIsAuthenticated}) {
         role: res?.role,
         name: res?.name
       })
+
       console.log("Step 6 ");
       setIsAuthenticated(true);
-      console.log("Step 7 ");
+  
       console.log("COOKIE: ", Cookies.get('todoToken'));
       if(res?.role == 'manager'){
         navigate("/dashboard")

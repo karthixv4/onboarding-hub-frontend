@@ -1,6 +1,6 @@
 // ktState.js
 import { atom, selector, selectorFamily } from 'recoil';
-import { FetchKTbyResourceId, getInitialSetupsByUser, updateKTPlan } from '../../../services/api';
+import { FetchKTbyResourceId, fetchUserById, getInitialSetupsByUser, updateKTPlan } from '../../../services/api';
 
 // Atom to hold the KT data
 export const ktDataAtom = atom({
@@ -76,3 +76,26 @@ export const loggedInUser = atom({
     key: 'loggedInUser',
     default:{}
 })
+
+
+export const loggedInUserSelector = selector({
+    key: 'loggedInUserSelector',
+    get: async ({ get }) => {
+        const user = get(loggedInUser);
+        console.log("user: ", user);
+        return user;
+        // if (!user || !user?.id) return {
+        //     empty: "empty"
+        // };
+
+        // try {
+        //     // Fetch user data by ID
+
+        //     const userData = await fetchUserById(user.id);
+        //     return userData;
+        // } catch (error) {
+        //     console.error('Error fetching user data:', error);
+        //     return null;
+        // }
+    }
+});
